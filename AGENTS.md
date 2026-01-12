@@ -34,6 +34,8 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 - `contracts/VERSION` is the source of truth for contract schema versions.
 - `agent_registry/agent-registry.yaml` — derived from ADR-002; новые intents/agents требуют нового ADR и semver-бампа.
 - Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
+- Model policy / LLM selection must follow ADR-003.
+- Запрещено хардкодить модели в агентах без политики/ADR.
 
 ## ADR-first, MVP-first, keep diagrams in sync
 
