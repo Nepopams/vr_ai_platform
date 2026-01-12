@@ -1,0 +1,14 @@
+[project]
+name = "hometask-ai-system"
+version = "0.1.0"
+description = "HomeTask AI System decision pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "jsonschema",
+  "pytest",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
