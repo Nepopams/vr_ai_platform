@@ -14,6 +14,7 @@ from codex.reasoning_log import build_reasoning_log
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
+CONTRACTS_VERSION_PATH = BASE_DIR / "contracts" / "VERSION"
 
 COMMAND_SCHEMA_PATH = SCHEMA_DIR / "command.schema.json"
 DECISION_SCHEMA_PATH = SCHEMA_DIR / "decision.schema.json"
@@ -46,13 +47,16 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
         "Simulate agent reasoning in mock mode.",
         "Assemble decision output and attach reasoning log.",
     ]
+    trace_id = f"trace-{uuid4().hex}"
     reasoning_log = build_reasoning_log(
         command_id=command["command_id"],
         steps=steps,
         model_version="mock-model-0.1",
         prompt_version="prompt-v0",
+        trace_id=trace_id,
     )
 
+    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
     decision = {
         "decision_id": f"dec-{uuid4().hex}",
         "command_id": command["command_id"],
@@ -66,6 +70,7 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
         "reasoning_log": reasoning_log,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "version": "v0",
+        "schema_version": schema_version,
     }
 
     decision_schema = load_schema(DECISION_SCHEMA_PATH)
