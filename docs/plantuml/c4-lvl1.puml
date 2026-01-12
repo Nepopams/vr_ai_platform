@@ -1,0 +1,16 @@
+@startuml C4-L1-System-Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title AI Platform for HomeTask — C4 L1 (System Context)
+
+Person(user, "User", "Говорит/пишет команды по дому")
+System(mobile, "HomeTask Client (Mobile/Web)", "UI, голос/текст, показывает прогресс job")
+System(hometask, "HomeTask Product Backend", "Домен: задачи/покупки/домохозяйство; выполняет действия; хранит состояние")
+System(ai, "AI Platform", "Stateless Decision Engine: CommandDTO -> DecisionDTO; LangGraph orchestration; trace + versions")
+
+Rel(user, mobile, "Создает команды, получает ответы/уведомления")
+Rel(mobile, hometask, "API calls (Auth, CRUD, job status)")
+Rel(hometask, ai, "POST /decide (CommandDTO)", "JSON (contract-first)")
+Rel(ai, hometask, "DecisionDTO (start_job/propose_*/clarify)", "JSON (schema_version, trace_id)")
+
+@enduml

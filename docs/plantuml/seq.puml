@@ -1,0 +1,39 @@
+@startuml SEQ-MVP-v1
+title HomeTask ↔ AI Platform MVP v1 — Sequence (Happy + Clarify + Job)
+
+actor User
+participant "HomeTask Client" as Client
+participant "HomeTask API" as HT
+participant "AI Platform /decide" as AI
+participant "HomeTask Job Runner" as Job
+database "HomeTask DB" as DB
+
+== Happy path: create_task/add_shopping_item (default short-path) ==
+User -> Client: "Купи молоко" / "Убери кухню вечером"
+Client -> HT: POST /commands (text, context snapshot request)
+HT -> DB: Load context (members/zones/lists/defaults)
+DB --> HT: Context projection
+HT -> AI: POST /decide (CommandDTO: text + context + capabilities)
+AI --> HT: DecisionDTO(action=start_job,\n payload.job_id, job_type,\n proposed_actions[], trace_id,\n schema_version, decision_version)
+HT -> DB: Create job + store trace_id
+HT -> Job: Enqueue job(job_id, proposed_actions)
+Job -> DB: Apply domain actions (idempotent)
+DB --> Job: OK
+Job -> DB: Update job progress/status
+HT --> Client: ACK ("Понял, приступаю") + job_id
+Client --> User: UI shows progress
+
+== Clarify path ==
+User -> Client: "Сделай как обычно"
+Client -> HT: POST /commands
+HT -> DB: Load context projection
+HT -> AI: POST /decide (CommandDTO)
+AI --> HT: DecisionDTO(action=clarify,\n payload.question/options,\n trace_id, versions)
+HT --> Client: Show clarify question
+Client --> User: Ask clarification
+User -> Client: "На сегодня вечером, кухня"
+Client -> HT: POST /commands (new text + context)
+HT -> AI: POST /decide
+AI --> HT: DecisionDTO(action=start_job + proposed_actions...)
+HT -> Job: Enqueue job ...
+@enduml

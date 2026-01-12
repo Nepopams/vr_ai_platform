@@ -1,0 +1,31 @@
+@startuml C4-L3-Component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title AI Platform — C4 L3 (Decision API Components, MVP v1)
+
+Container_Boundary(ai_api, "AI Platform — Decision API (FastAPI)") {
+
+  Component(ctrl, "Decide Controller", "FastAPI route", "Принимает CommandDTO, возвращает DecisionDTO")
+  Component(schemaVal, "Contract Validator", "jsonschema", "Валидация CommandDTO/DecisionDTO по contracts/schemas")
+  Component(versioning, "Version Provider", "Reader", "Читает contracts/VERSION -> schema_version; decision_version фиксируется")
+  Component(graphRunner, "Graph Runner", "LangGraph", "Запуск core_graph (MVP rule-based)")
+  Component(trace, "Trace/Reasoning Logger", "JSONL", "Логирует trace_id, reasoning_log, версии")
+}
+
+Container_Boundary(ai_graph, "Orchestrator — MVP Graph") {
+  Component(nodeValidate, "Node: Validate", "LangGraph node", "Validate input + init trace_id")
+  Component(nodePlan, "Node: Planner", "LangGraph node", "Intent + entities (MVP rules)")
+  Component(nodeDecide, "Node: Decider", "LangGraph node", "start_job + proposed_actions OR clarify")
+  Component(nodeFinalize, "Node: Finalize", "LangGraph node", "Assemble DecisionDTO + validate output")
+}
+
+Rel(ctrl, schemaVal, "Validate input/output")
+Rel(ctrl, versioning, "Read schema_version")
+Rel(ctrl, graphRunner, "Run graph")
+Rel(graphRunner, nodeValidate, "Exec")
+Rel(graphRunner, nodePlan, "Exec")
+Rel(graphRunner, nodeDecide, "Exec")
+Rel(graphRunner, nodeFinalize, "Exec")
+Rel(ctrl, trace, "Append logs", "trace_id + versions")
+
+@enduml

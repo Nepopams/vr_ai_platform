@@ -1,0 +1,34 @@
+@startuml C4-L2-Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title AI Platform for HomeTask — C4 L2 (Containers)
+
+Person(user, "User", "Команды и уточнения")
+
+System_Boundary(ht, "HomeTask Product") {
+  Container(ht_client, "Client (Mobile/Web)", "Flutter/React", "UI + Voice/Text input")
+  Container(ht_api, "Backend API", "Any", "Auth, Domain API, Job API")
+  Container(ht_domain, "Domain & Job Runner", "Any", "Создает job, исполняет предложенные действия, ведет прогресс")
+  ContainerDb(ht_db, "Product DB", "Postgres", "Tasks, ShoppingLists, Household, Jobs, Events")
+}
+
+System_Boundary(ai_sys, "AI Platform") {
+  Container(ai_api, "Decision API", "Python/FastAPI", "POST /decide; schema validation; returns DecisionDTO")
+  Container(ai_graph, "Orchestrator", "Python/LangGraph", "Pipeline: validate -> plan -> decide -> clarify -> finalize")
+  Container(ai_agents, "Agents (MVP)", "Python", "Planner/Decider/Clarifier (rule-based in MVP)")
+  Container(ai_obs, "Trace & Decision Logs", "JSONL/OTel later", "trace_id, decision_version, schema_version (append-only)")
+}
+
+Rel(user, ht_client, "Создает команды/получает ответы")
+Rel(ht_client, ht_api, "HTTPS")
+Rel(ht_api, ht_db, "Reads/Writes")
+Rel(ht_api, ht_domain, "Enqueue/Run jobs")
+Rel(ht_domain, ht_db, "Persist jobs/progress/events")
+
+Rel(ht_api, ai_api, "POST /decide", "CommandDTO (capabilities + context)")
+Rel(ai_api, ai_graph, "Invoke graph", "LangGraph run")
+Rel(ai_graph, ai_agents, "Call nodes", "Planner/Decider/Clarifier")
+Rel(ai_api, ai_obs, "Append decision log", "trace_id + versions")
+Rel(ai_graph, ai_obs, "Append reasoning steps", "reasoning_log")
+
+@enduml
