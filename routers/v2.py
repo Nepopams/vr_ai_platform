@@ -1,0 +1,134 @@
+"""Router strategy V2 pipeline (Normalizer → Planner → Validator)."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Set
+
+from graphs.core_graph import (
+    build_clarify_decision,
+    build_proposed_action,
+    build_start_job_decision,
+    detect_intent,
+    extract_item_name,
+    _default_assignee_id,
+    _default_list_id,
+)
+from routers.base import RouterStrategy
+
+
+class RouterV2Pipeline(RouterStrategy):
+    def decide(self, command: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = self.normalize(command)
+        plan = self.plan(normalized, command)
+        return self.validate_and_build(plan, normalized, command)
+
+    def normalize(self, command: Dict[str, Any]) -> Dict[str, Any]:
+        text = command.get("text", "").strip()
+        intent = detect_intent(text) if text else "clarify_needed"
+        item_name = extract_item_name(text) if intent == "add_shopping_item" else None
+        task_title = text if intent == "create_task" else None
+        capabilities = set(command.get("capabilities", []))
+        return {
+            "text": text,
+            "intent": intent,
+            "item_name": item_name,
+            "task_title": task_title,
+            "capabilities": capabilities,
+        }
+
+    def plan(self, normalized: Dict[str, Any], command: Dict[str, Any]) -> Dict[str, Any]:
+        intent = normalized["intent"]
+        proposed_actions: List[Dict[str, Any]] = []
+        capabilities: Set[str] = normalized["capabilities"]
+
+        if intent == "add_shopping_item" and normalized.get("item_name"):
+            if "propose_add_shopping_item" in capabilities:
+                list_id = _default_list_id(command)
+                item_payload: Dict[str, Any] = {"name": normalized["item_name"]}
+                if list_id:
+                    item_payload["list_id"] = list_id
+                proposed_actions.append(
+                    build_proposed_action(
+                        "propose_add_shopping_item",
+                        {"item": item_payload},
+                    )
+                )
+        elif intent == "create_task" and normalized.get("task_title"):
+            if "propose_create_task" in capabilities:
+                proposed_actions.append(
+                    build_proposed_action(
+                        "propose_create_task",
+                        {
+                            "task": {
+                                "title": normalized["task_title"],
+                                "assignee_id": _default_assignee_id(command),
+                            }
+                        },
+                    )
+                )
+
+        return {
+            "intent": intent,
+            "proposed_actions": proposed_actions or None,
+        }
+
+    def validate_and_build(
+        self,
+        plan: Dict[str, Any],
+        normalized: Dict[str, Any],
+        command: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        capabilities: Set[str] = normalized["capabilities"]
+        text = normalized["text"]
+        intent = normalized["intent"]
+
+        if "start_job" not in capabilities:
+            return build_clarify_decision(
+                command,
+                question="Какие действия разрешены для выполнения?",
+                explanation="Отсутствует capability start_job.",
+            )
+
+        if not text:
+            return build_clarify_decision(
+                command,
+                question="Опишите, что нужно сделать: задача или покупка?",
+                missing_fields=["text"],
+                explanation="Текст команды пустой.",
+            )
+
+        if intent == "add_shopping_item":
+            if not normalized.get("item_name"):
+                return build_clarify_decision(
+                    command,
+                    question="Какой товар добавить в список покупок?",
+                    missing_fields=["item.name"],
+                    explanation="Не удалось извлечь название товара.",
+                )
+            return build_start_job_decision(
+                command,
+                job_type="add_shopping_item",
+                proposed_actions=plan.get("proposed_actions"),
+                explanation="Распознан запрос на добавление покупки.",
+            )
+
+        if intent == "create_task":
+            if not normalized.get("task_title"):
+                return build_clarify_decision(
+                    command,
+                    question="Какую задачу нужно создать?",
+                    missing_fields=["task.title"],
+                    explanation="Не удалось получить описание задачи.",
+                )
+            return build_start_job_decision(
+                command,
+                job_type="create_task",
+                proposed_actions=plan.get("proposed_actions"),
+                explanation="Распознан запрос на создание задачи.",
+            )
+
+        return build_clarify_decision(
+            command,
+            question="Уточните, что нужно сделать: задача или покупка?",
+            explanation="Интент не распознан.",
+        )

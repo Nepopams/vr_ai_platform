@@ -9,7 +9,7 @@ from typing import Any, Dict
 from jsonschema import ValidationError, validate
 
 from app.logging.decision_log import append_decision_log, append_decision_text
-from graphs.core_graph import process_command
+from routers.factory import decide as router_decide
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
@@ -42,7 +42,7 @@ def validate_decision(decision: Dict[str, Any]) -> None:
 
 def decide(command: Dict[str, Any]) -> Dict[str, Any]:
     validate_command(command)
-    decision = process_command(command)
+    decision = router_decide(command)
     validate_decision(decision)
     append_decision_log(decision)
     append_decision_text(command, decision.get("trace_id"))
