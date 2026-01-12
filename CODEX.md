@@ -27,15 +27,18 @@ IMPORTANT:
 
 # ADR Compliance
 
-For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development must follow ADR-000 and ADR-001.
+For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development must follow ADR-000, ADR-001, and ADR-002.
 
 - All contract changes must obey semver and backward compatibility rules described in ADR-001.
 - If a solution conflicts with an ADR, stop and capture the decision in a new ADR (Draft) instead of pushing code changes.
+- `agent_registry/agent-registry.yaml` — derived artifact from ADR-002; любые новые intents/agents требуют нового ADR и semver-бампа.
+- Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
 
 See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 
 - ADR-000: AI Platform — Contract-first Intent → Decision Engine (LangGraph)
 - ADR-001: Contract versioning & compatibility policy (CommandDTO/DecisionDTO)
+- ADR-002: Agent model & execution boundaries (MVP)
 
 # MVP v1 Compliance
 
@@ -51,7 +54,7 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 
 # Architecture & MVP Compliance
 
-- ADR-000 и ADR-001 обязательны для всех изменений платформы.
+- ADR-000, ADR-001 и ADR-002 обязательны для всех изменений платформы.
 - MVP v1 обязателен для всех изменений в `contracts/`, `graphs/`, `agents/`, `skills/`.
 - Диаграммы в `docs/diagrams/` — обязательные артефакты: код и диаграммы должны быть синхронизированы.
 - Любое изменение вне MVP v1 допускается только через новый документ MVP (v2) и,
@@ -70,4 +73,4 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 
 необходимо обновлять диаграммы и/или оформлять новый ADR.
 
-Ссылки: `docs/adr/ADR-000-ai-platform-intent-decision-engine.md`, `docs/adr/ADR-001-contract-versioning-compatibility-policy.md`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.
+Ссылки: `docs/adr/ADR-000-ai-platform-intent-decision-engine.md`, `docs/adr/ADR-001-contract-versioning-compatibility-policy.md`, `docs/adr/ADR-002-agent-model-execution-boundaries-mvp.md`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.

@@ -29,13 +29,15 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 
 ## ADR-first development
 
-- Follow ADR-000 and ADR-001 for all platform evolution decisions.
+- Follow ADR-000, ADR-001, and ADR-002 for all platform evolution decisions.
 - Ensure safe handling for unknown `action` values and payload fields.
 - `contracts/VERSION` is the source of truth for contract schema versions.
+- `agent_registry/agent-registry.yaml` — derived from ADR-002; новые intents/agents требуют нового ADR и semver-бампа.
+- Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
 
 ## ADR-first, MVP-first, keep diagrams in sync
 
-- Любые изменения должны соответствовать ADR-000/ADR-001 и MVP v1.
+- Любые изменения должны соответствовать ADR-000/ADR-001/ADR-002 и MVP v1.
 - Диаграммы в `docs/diagrams/` — обязательные артефакты, поддерживайте синхронизацию с кодом.
 - Safe handling unknown action/payload — обязательное правило совместимости (ADR-001).
 - См. `docs/mvp/AI_PLATFORM_MVP_v1.md` и `docs/diagrams/README.md`.
