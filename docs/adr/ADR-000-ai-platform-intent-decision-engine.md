@@ -132,3 +132,8 @@ MVP-граф:
 - short/long path утверждён и не ломает stateless-принцип
 - контрактный протокол и MVP-объём согласованы
 - LangGraph принят как базовый механизм оркестрации
+
+## Links
+
+- MVP v1: `docs/mvp/AI_PLATFORM_MVP_v1.md`
+- Diagrams index: `docs/diagrams/README.md`
