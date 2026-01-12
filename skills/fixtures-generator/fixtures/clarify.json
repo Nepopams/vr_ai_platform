@@ -1,0 +1,16 @@
+{
+  "command_id": "cmd-clarify-004",
+  "context": {
+    "needs_clarification": [
+      "store list",
+      "time window"
+    ]
+  },
+  "task": {
+    "description": "Need confirmation on which stores to visit.",
+    "priority": "medium",
+    "title": "Plan weekend errands"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-103"
+}

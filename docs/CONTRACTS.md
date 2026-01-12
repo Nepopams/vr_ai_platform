@@ -86,3 +86,94 @@ The current contract schema version is tracked in [`contracts/VERSION`](../contr
   "version": "v0"
 }
 ```
+
+## Generated Examples
+
+The examples below are generated from `skills/fixtures-generator/scripts/generate_fixtures.py`.
+
+<!-- BEGIN GENERATED EXAMPLES -->
+### create_task
+
+Create a new household task.
+
+```json
+{
+  "command_id": "cmd-create-001",
+  "context": {
+    "source": "mobile-app"
+  },
+  "task": {
+    "description": "Book a plumber to fix the kitchen sink leak.",
+    "priority": "high",
+    "title": "Schedule plumber visit"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-100"
+}
+```
+
+### assign_task
+
+Assign an existing task to a household member.
+
+```json
+{
+  "command_id": "cmd-assign-002",
+  "context": {
+    "assignee": "Sam",
+    "due_date": "2024-01-05"
+  },
+  "task": {
+    "description": "Assign the recycling pickup to Sam.",
+    "priority": "medium",
+    "title": "Take out recycling"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-101"
+}
+```
+
+### add_shopping_item
+
+Add an item to the shared shopping list.
+
+```json
+{
+  "command_id": "cmd-shop-003",
+  "context": {
+    "list": "groceries",
+    "quantity": "2 cartons"
+  },
+  "task": {
+    "description": "Add oat milk to the grocery list for this week.",
+    "priority": "low",
+    "title": "Buy oat milk"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-102"
+}
+```
+
+### clarify
+
+Ask a clarifying question for missing task details.
+
+```json
+{
+  "command_id": "cmd-clarify-004",
+  "context": {
+    "needs_clarification": [
+      "store list",
+      "time window"
+    ]
+  },
+  "task": {
+    "description": "Need confirmation on which stores to visit.",
+    "priority": "medium",
+    "title": "Plan weekend errands"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-103"
+}
+```
+<!-- END GENERATED EXAMPLES -->
