@@ -1,0 +1,14 @@
+{
+  "command_id": "cmd-200",
+  "user_id": "user-80",
+  "timestamp": "2024-05-12T15:33:00Z",
+  "text": "Купи хлеб",
+  "context": {
+    "household": {
+      "household_id": "house-80",
+      "members": [
+        {"user_id": "user-80", "display_name": "Никита"}
+      ]
+    }
+  }
+}

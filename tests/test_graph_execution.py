@@ -26,3 +26,11 @@ def test_process_command_returns_valid_decisions():
     assert {decision["command_id"] for decision in decisions} == {
         command["command_id"] for command in fixture_commands
     }
+    assert {decision["action"] for decision in decisions}.issubset(
+        {
+            "start_job",
+            "propose_create_task",
+            "propose_add_shopping_item",
+            "clarify",
+        }
+    )

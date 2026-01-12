@@ -1,7 +1,7 @@
 # Graph Sanity Skill
 
 ## Inputs
-- Command fixtures (default: `skills/contract-checker/fixtures/valid_command.json`).
+- Command fixtures (default: `skills/contract-checker/fixtures/valid_command_create_task.json`).
 - Core graph pipeline.
 
 ## Outputs

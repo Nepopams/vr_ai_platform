@@ -3,24 +3,94 @@
   "$id": "https://hometask.ai/schemas/command.schema.json",
   "title": "Command",
   "type": "object",
-  "required": ["command_id", "user_id", "timestamp", "task"],
+  "required": ["command_id", "user_id", "timestamp", "text", "capabilities", "context"],
   "properties": {
     "command_id": {"type": "string"},
     "user_id": {"type": "string"},
     "timestamp": {"type": "string", "format": "date-time"},
-    "task": {
-      "type": "object",
-      "required": ["title", "description", "priority"],
-      "properties": {
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "priority": {"type": "string", "enum": ["low", "medium", "high"]}
+    "text": {"type": "string"},
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "start_job",
+          "propose_create_task",
+          "propose_add_shopping_item",
+          "clarify"
+        ]
       },
-      "additionalProperties": false
+      "minItems": 1
     },
     "context": {
       "type": "object",
-      "additionalProperties": true
+      "required": ["household"],
+      "properties": {
+        "household": {
+          "type": "object",
+          "required": ["members"],
+          "properties": {
+            "household_id": {"type": "string"},
+            "members": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["user_id"],
+                "properties": {
+                  "user_id": {"type": "string"},
+                  "display_name": {"type": "string"},
+                  "role": {"type": "string"},
+                  "workload_score": {"type": "number"}
+                },
+                "additionalProperties": false
+              }
+            },
+            "zones": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["zone_id", "name"],
+                "properties": {
+                  "zone_id": {"type": "string"},
+                  "name": {"type": "string"}
+                },
+                "additionalProperties": false
+              }
+            },
+            "shopping_lists": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["list_id", "name"],
+                "properties": {
+                  "list_id": {"type": "string"},
+                  "name": {"type": "string"}
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "default_assignee_id": {"type": "string"},
+            "default_list_id": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "policies": {
+          "type": "object",
+          "properties": {
+            "quiet_hours": {"type": "string"},
+            "max_open_tasks_per_user": {"type": "integer", "minimum": 0}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

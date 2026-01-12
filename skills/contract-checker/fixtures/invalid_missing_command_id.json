@@ -1,0 +1,19 @@
+{
+  "user_id": "user-82",
+  "timestamp": "2024-05-12T15:35:00Z",
+  "text": "Сделай задачу",
+  "capabilities": [
+    "start_job",
+    "propose_create_task",
+    "propose_add_shopping_item",
+    "clarify"
+  ],
+  "context": {
+    "household": {
+      "household_id": "house-82",
+      "members": [
+        {"user_id": "user-82", "display_name": "Олег"}
+      ]
+    }
+  }
+}

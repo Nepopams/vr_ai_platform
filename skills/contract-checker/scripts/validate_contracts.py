@@ -4,7 +4,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
 FIXTURE_DIR = BASE_DIR / "skills" / "contract-checker" / "fixtures"
 

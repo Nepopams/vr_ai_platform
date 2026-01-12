@@ -5,12 +5,10 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from jsonschema import validate
-
-from codex.reasoning_log import build_reasoning_log
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
@@ -29,12 +27,102 @@ def sample_command() -> Dict[str, Any]:
         "command_id": "cmd-001",
         "user_id": "user-123",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "task": {
-            "title": "Plan weekly chores",
-            "description": "Generate a mock plan for household chores.",
-            "priority": "medium",
+        "text": "Добавь молоко в список покупок",
+        "capabilities": [
+            "start_job",
+            "propose_create_task",
+            "propose_add_shopping_item",
+            "clarify",
+        ],
+        "context": {
+            "household": {
+                "household_id": "house-1",
+                "members": [{"user_id": "user-123", "display_name": "Аня"}],
+                "shopping_lists": [{"list_id": "list-1", "name": "Продукты"}],
+            }
         },
-        "context": {"locale": "en-US"},
+    }
+
+
+SHOPPING_KEYWORDS = ("куп", "shopping", "grocery", "buy", "add")
+TASK_KEYWORDS = ("task", "todo", "сделай", "сделать", "нужно", "починить", "убраться")
+
+
+def detect_intent(text: str) -> str:
+    lowered = text.lower()
+    if any(keyword in lowered for keyword in SHOPPING_KEYWORDS):
+        return "add_shopping_item"
+    if any(keyword in lowered for keyword in TASK_KEYWORDS):
+        return "create_task"
+    return "clarify_needed"
+
+
+def extract_item_name(text: str) -> Optional[str]:
+    lowered = text.lower()
+    patterns = ("купить ", "buy ", "add ", "добавь ", "добавить ")
+    for pattern in patterns:
+        if pattern in lowered:
+            start = lowered.find(pattern) + len(pattern)
+            candidate = text[start:].strip()
+            return candidate or None
+    return None
+
+
+def build_proposed_action(action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    return {"action": action, "payload": payload}
+
+
+def build_clarify_decision(
+    command: Dict[str, Any],
+    question: str,
+    missing_fields: Optional[List[str]] = None,
+    explanation: str = "Нужны уточнения для выполнения запроса.",
+) -> Dict[str, Any]:
+    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
+    payload: Dict[str, Any] = {"question": question}
+    if missing_fields:
+        payload["missing_fields"] = missing_fields
+    return {
+        "decision_id": f"dec-{uuid4().hex}",
+        "command_id": command["command_id"],
+        "status": "clarify",
+        "action": "clarify",
+        "confidence": 0.35,
+        "payload": payload,
+        "explanation": explanation,
+        "trace_id": f"trace-{uuid4().hex}",
+        "schema_version": schema_version,
+        "decision_version": "mvp1-mock-0.1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def build_start_job_decision(
+    command: Dict[str, Any],
+    job_type: str,
+    proposed_actions: Optional[List[Dict[str, Any]]] = None,
+    explanation: str = "Запрос принят, запускаю выполнение.",
+) -> Dict[str, Any]:
+    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
+    payload: Dict[str, Any] = {
+        "job_id": f"job-{uuid4().hex}",
+        "job_type": job_type,
+    }
+    if proposed_actions:
+        payload["proposed_actions"] = proposed_actions
+    payload["ui_message"] = "Принял, начинаю работу."
+    return {
+        "decision_id": f"dec-{uuid4().hex}",
+        "command_id": command["command_id"],
+        "status": "ok",
+        "action": "start_job",
+        "confidence": 0.78,
+        "payload": payload,
+        "explanation": explanation,
+        "trace_id": f"trace-{uuid4().hex}",
+        "schema_version": schema_version,
+        "decision_version": "mvp1-mock-0.1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -42,41 +130,104 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
     command_schema = load_schema(COMMAND_SCHEMA_PATH)
     validate(instance=command, schema=command_schema)
 
-    steps = [
-        "Validate command payload against schema.",
-        "Simulate agent reasoning in mock mode.",
-        "Assemble decision output and attach reasoning log.",
-    ]
-    trace_id = f"trace-{uuid4().hex}"
-    reasoning_log = build_reasoning_log(
-        command_id=command["command_id"],
-        steps=steps,
-        model_version="mock-model-0.1",
-        prompt_version="prompt-v0",
-        trace_id=trace_id,
-    )
+    text = command.get("text", "")
+    intent = detect_intent(text)
+    capabilities = set(command.get("capabilities", []))
 
-    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
-    decision = {
-        "decision_id": f"dec-{uuid4().hex}",
-        "command_id": command["command_id"],
-        "status": "accepted",
-        "actions": [
-            {
-                "type": "plan",
-                "description": "Provide a mock weekly chores plan.",
-            }
-        ],
-        "reasoning_log": reasoning_log,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "version": "v0",
-        "schema_version": schema_version,
-    }
+    if "start_job" not in capabilities:
+        decision = build_clarify_decision(
+            command,
+            question="Какие действия разрешены для выполнения?",
+            explanation="Отсутствует capability start_job.",
+        )
+    elif intent == "add_shopping_item":
+        item_name = extract_item_name(text)
+        if not item_name:
+            decision = build_clarify_decision(
+                command,
+                question="Какой товар добавить в список покупок?",
+                missing_fields=["item.name"],
+                explanation="Не удалось извлечь название товара.",
+            )
+        else:
+            proposed_actions: List[Dict[str, Any]] = []
+            if "propose_add_shopping_item" in capabilities:
+                list_id = _default_list_id(command)
+                item_payload = {"name": item_name}
+                if list_id:
+                    item_payload["list_id"] = list_id
+                proposed_actions.append(
+                    build_proposed_action(
+                        "propose_add_shopping_item",
+                        {
+                            "item": item_payload
+                        },
+                    )
+                )
+            decision = build_start_job_decision(
+                command,
+                job_type="add_shopping_item",
+                proposed_actions=proposed_actions or None,
+                explanation="Распознан запрос на добавление покупки.",
+            )
+    elif intent == "create_task":
+        title = text.strip()
+        if not title:
+            decision = build_clarify_decision(
+                command,
+                question="Какую задачу нужно создать?",
+                missing_fields=["task.title"],
+                explanation="Не удалось получить описание задачи.",
+            )
+        else:
+            proposed_actions = []
+            if "propose_create_task" in capabilities:
+                proposed_actions.append(
+                    build_proposed_action(
+                        "propose_create_task",
+                        {
+                            "task": {
+                                "title": title,
+                                "assignee_id": _default_assignee_id(command),
+                            }
+                        },
+                    )
+                )
+            decision = build_start_job_decision(
+                command,
+                job_type="create_task",
+                proposed_actions=proposed_actions or None,
+                explanation="Распознан запрос на создание задачи.",
+            )
+    else:
+        decision = build_clarify_decision(
+            command,
+            question="Уточните, что нужно сделать: задача или покупка?",
+            explanation="Интент не распознан.",
+        )
 
     decision_schema = load_schema(DECISION_SCHEMA_PATH)
     validate(instance=decision, schema=decision_schema)
 
     return decision
+
+
+def _default_list_id(command: Dict[str, Any]) -> Optional[str]:
+    defaults = command.get("context", {}).get("defaults", {})
+    if defaults.get("default_list_id"):
+        return defaults["default_list_id"]
+
+    lists = command.get("context", {}).get("household", {}).get("shopping_lists", [])
+    if len(lists) == 1:
+        return lists[0].get("list_id")
+    return None
+
+
+def _default_assignee_id(command: Dict[str, Any]) -> Optional[str]:
+    defaults = command.get("context", {}).get("defaults", {})
+    if defaults.get("default_assignee_id"):
+        return defaults["default_assignee_id"]
+    return command.get("user_id")
 
 
 def main() -> None:

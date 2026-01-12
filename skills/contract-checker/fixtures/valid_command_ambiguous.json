@@ -1,0 +1,20 @@
+{
+  "command_id": "cmd-102",
+  "user_id": "user-79",
+  "timestamp": "2024-05-12T15:32:00Z",
+  "text": "Привет",
+  "capabilities": [
+    "start_job",
+    "propose_create_task",
+    "propose_add_shopping_item",
+    "clarify"
+  ],
+  "context": {
+    "household": {
+      "household_id": "house-79",
+      "members": [
+        {"user_id": "user-79", "display_name": "Мария"}
+      ]
+    }
+  }
+}

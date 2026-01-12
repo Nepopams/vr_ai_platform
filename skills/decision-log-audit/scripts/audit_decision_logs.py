@@ -5,7 +5,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = BASE_DIR / "contracts" / "schemas" / "decision.schema.json"
 DEFAULT_LOG_PATH = (
     BASE_DIR / "skills" / "decision-log-audit" / "fixtures" / "sample_decision_log.jsonl"
