@@ -27,6 +27,12 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 - Agents should include a `version` identifier.
 - The pipeline should record agent versions in the reasoning log whenever an agent is invoked.
 
+## ADR-first development
+
+- Follow ADR-000 and ADR-001 for all platform evolution decisions.
+- Ensure safe handling for unknown `action` values and payload fields.
+- `contracts/VERSION` is the source of truth for contract schema versions.
+
 ## Skills
 
 Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.
