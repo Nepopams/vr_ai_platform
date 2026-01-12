@@ -59,7 +59,7 @@ def detect_intent(text: str) -> str:
 
 def extract_item_name(text: str) -> Optional[str]:
     lowered = text.lower()
-    patterns = ("купить ", "buy ", "add ", "добавь ", "добавить ")
+    patterns = ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить ")
     for pattern in patterns:
         if pattern in lowered:
             start = lowered.find(pattern) + len(pattern)
@@ -92,7 +92,7 @@ def build_clarify_decision(
         "explanation": explanation,
         "trace_id": f"trace-{uuid4().hex}",
         "schema_version": schema_version,
-        "decision_version": "mvp1-mock-0.1",
+        "decision_version": "mvp1-graph-0.1",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -121,7 +121,7 @@ def build_start_job_decision(
         "explanation": explanation,
         "trace_id": f"trace-{uuid4().hex}",
         "schema_version": schema_version,
-        "decision_version": "mvp1-mock-0.1",
+        "decision_version": "mvp1-graph-0.1",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -130,7 +130,7 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
     command_schema = load_schema(COMMAND_SCHEMA_PATH)
     validate(instance=command, schema=command_schema)
 
-    text = command.get("text", "")
+    text = command.get("text", "").strip()
     intent = detect_intent(text)
     capabilities = set(command.get("capabilities", []))
 
@@ -139,6 +139,13 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
             command,
             question="Какие действия разрешены для выполнения?",
             explanation="Отсутствует capability start_job.",
+        )
+    elif not text:
+        decision = build_clarify_decision(
+            command,
+            question="Опишите, что нужно сделать: задача или покупка?",
+            missing_fields=["text"],
+            explanation="Текст команды пустой.",
         )
     elif intent == "add_shopping_item":
         item_name = extract_item_name(text)
