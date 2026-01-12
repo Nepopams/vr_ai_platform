@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Protocol
 
 from jsonschema import validate
 
@@ -13,11 +14,22 @@ SUITE_DIR = Path(__file__).resolve().parent
 FIXTURE_DIR = SUITE_DIR.parent / "fixtures" / "commands"
 REPO_ROOT = SUITE_DIR.parents[2]
 DECISION_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "decision.schema.json"
+CORE_GRAPH_PATH = REPO_ROOT / "graphs" / "core_graph.py"
+
+
+class ProcessCommand(Protocol):
+    def __call__(self, command: Dict[str, Any]) -> Dict[str, Any]: ...
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from graphs.core_graph import process_command
+def load_process_command() -> ProcessCommand:
+    spec = importlib.util.spec_from_file_location("core_graph", CORE_GRAPH_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load core graph module at {CORE_GRAPH_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.process_command
 
 
 def load_fixture_commands(paths: Optional[Iterable[Path]] = None) -> List[Dict[str, Any]]:
@@ -63,6 +75,7 @@ def run_graph_suite(
     failures: List[str] = []
     fixture_commands = load_fixture_commands(fixture_paths)
     decision_schema = load_decision_schema()
+    process_command = load_process_command()
 
     decisions = []
     for command in fixture_commands:
