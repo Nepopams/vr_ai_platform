@@ -39,6 +39,15 @@ curl -sS http://localhost:8000/decide \
   -d @docs/integration/examples/create_task_start_job.json
 ```
 
+## Выбор стратегии маршрутизации решений
+
+По умолчанию используется стратегия v1 (поведение не меняется).
+Чтобы включить скелет RouterV2, установите флаг окружения:
+
+```bash
+DECISION_ROUTER_STRATEGY=v2
+```
+
 ## Интерпретация DecisionDTO
 
 Ответ DecisionDTO всегда содержит `action` и `payload`, соответствующие схеме.

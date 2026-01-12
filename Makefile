@@ -10,7 +10,7 @@ test:
 	pytest
 
 test-core:
-	pytest tests/test_contracts.py tests/test_graph_execution.py tests/test_skill_checks.py tests/test_agent_registry.py
+	pytest tests/test_contracts.py tests/test_graph_execution.py tests/test_skill_checks.py tests/test_agent_registry.py tests/test_router_strategy.py tests/test_router_golden_like.py
 
 validate_contracts:
 	pytest tests/test_contracts.py
