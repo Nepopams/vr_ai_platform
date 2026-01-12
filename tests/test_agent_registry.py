@@ -4,6 +4,12 @@ from pathlib import Path
 
 import pytest
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from agent_registry import loader as registry_loader
+
 
 def _write_registry(path: Path, payload: dict) -> Path:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -11,8 +17,8 @@ def _write_registry(path: Path, payload: dict) -> Path:
 
 
 def _load_registry_payload() -> dict:
-    registry_path = Path(__file__).resolve().parents[1] / "agent_registry" / "agent-registry.yaml"
-    return json.loads(registry_path.read_text(encoding="utf-8"))
+    registry_path = BASE_DIR / "agent_registry" / "agent-registry.yaml"
+    return registry_loader._load_registry_payload(registry_path)
 
 
 def test_load_valid_registry() -> None:
@@ -50,7 +56,9 @@ def test_intent_coverage_has_executors(tmp_path: Path) -> None:
     from agent_registry.loader import AgentRegistryLoader
 
     payload = _load_registry_payload()
-    payload["agents"] = [agent for agent in payload["agents"] if agent["agent_id"] != "task"]
+    for agent in payload["agents"]:
+        if agent["agent_id"] == "task":
+            agent.pop("action", None)
     registry_path = _write_registry(tmp_path / "invalid.yaml", payload)
 
     with pytest.raises(ValueError, match="missing propose_create_task executor"):

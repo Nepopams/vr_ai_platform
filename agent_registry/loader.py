@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,7 @@ class AgentRegistryLoader:
             return None
 
         registry_path = Path(path_override) if path_override else _default_registry_path()
-        payload = _load_json_payload(registry_path)
+        payload = _load_registry_payload(registry_path)
         _validate_registry(payload)
         return _to_registry(payload)
 
@@ -43,7 +44,7 @@ def _default_registry_path() -> Path:
     return Path(__file__).resolve().parent / "agent-registry.yaml"
 
 
-def _load_json_payload(path: Path) -> dict[str, Any]:
+def _load_registry_payload(path: Path) -> dict[str, Any]:
     try:
         raw = path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
@@ -51,8 +52,8 @@ def _load_json_payload(path: Path) -> dict[str, Any]:
 
     try:
         parsed = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"agent registry is not valid JSON/YAML: {path}") from exc
+    except json.JSONDecodeError:
+        parsed = _parse_yaml(raw)
 
     if not isinstance(parsed, dict):
         raise ValueError("agent registry must be a mapping")
@@ -60,20 +61,138 @@ def _load_json_payload(path: Path) -> dict[str, Any]:
     return parsed
 
 
-def _validate_registry(payload: dict[str, Any]) -> None:
-    _require_keys(payload, [
-        "registry_version",
-        "compat.adr",
-        "compat.mvp",
-        "compat.contracts_version",
-        "agents",
-        "intents",
-    ])
+def _parse_yaml(raw: str) -> dict[str, Any]:
+    tokens = _tokenize_yaml(raw)
+    if not tokens:
+        raise ValueError("agent registry is empty")
 
-    if payload["compat.adr"] != "ADR-002":
+    index = 0
+
+    def parse_node(expected_indent: int) -> Any:
+        nonlocal index
+        if index >= len(tokens):
+            return {}
+        indent, content = tokens[index]
+        if indent < expected_indent:
+            return {}
+        if content.startswith("- "):
+            return parse_list(expected_indent)
+        return parse_mapping(expected_indent)
+
+    def parse_mapping(expected_indent: int) -> dict[str, Any]:
+        nonlocal index
+        mapping: dict[str, Any] = {}
+        while index < len(tokens):
+            indent, content = tokens[index]
+            if indent < expected_indent:
+                break
+            if content.startswith("- "):
+                break
+            key, sep, rest = content.partition(":")
+            if not sep:
+                raise ValueError(f"invalid mapping entry: {content}")
+            key = key.strip()
+            rest = rest.strip()
+            index += 1
+            if rest == "":
+                if index < len(tokens) and tokens[index][0] > indent:
+                    mapping[key] = parse_node(tokens[index][0])
+                else:
+                    mapping[key] = {}
+            else:
+                mapping[key] = _parse_scalar(rest)
+        return mapping
+
+    def parse_list(expected_indent: int) -> list[Any]:
+        nonlocal index
+        items: list[Any] = []
+        while index < len(tokens):
+            indent, content = tokens[index]
+            if indent < expected_indent or not content.startswith("- "):
+                break
+            item_content = content[2:].strip()
+            index += 1
+            if item_content == "":
+                if index < len(tokens) and tokens[index][0] > indent:
+                    items.append(parse_node(tokens[index][0]))
+                else:
+                    items.append(None)
+                continue
+            if ":" in item_content:
+                key, _, rest = item_content.partition(":")
+                key = key.strip()
+                rest = rest.strip()
+                item: dict[str, Any] = {}
+                if rest == "":
+                    if index < len(tokens) and tokens[index][0] > indent:
+                        item[key] = parse_node(tokens[index][0])
+                    else:
+                        item[key] = {}
+                else:
+                    item[key] = _parse_scalar(rest)
+                if index < len(tokens) and tokens[index][0] > indent:
+                    extra = parse_mapping(tokens[index][0])
+                    item.update(extra)
+                items.append(item)
+            else:
+                items.append(_parse_scalar(item_content))
+        return items
+
+    result = parse_mapping(tokens[0][0])
+    if not isinstance(result, dict):
+        raise ValueError("agent registry must be a mapping")
+    return result
+
+
+def _tokenize_yaml(raw: str) -> list[tuple[int, str]]:
+    tokens: list[tuple[int, str]] = []
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        stripped = line.lstrip(" ")
+        if stripped.startswith("#"):
+            continue
+        indent = len(line) - len(stripped)
+        tokens.append((indent, stripped))
+    return tokens
+
+
+def _parse_scalar(value: str) -> str:
+    if value.startswith("\"") and value.endswith("\""):
+        return value[1:-1]
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1]
+    return value
+
+
+def _normalize_compat(payload: dict[str, Any]) -> dict[str, Any]:
+    compat = payload.get("compat")
+    legacy_keys = {
+        "compat.adr": "adr",
+        "compat.mvp": "mvp",
+        "compat.contracts_version": "contracts_version",
+    }
+    legacy_present = any(key in payload for key in legacy_keys)
+
+    if compat is None and legacy_present:
+        compat = {target: payload.get(source) for source, target in legacy_keys.items()}
+        warnings.warn("legacy compat.* keys detected; migrate to compat: {...}", UserWarning)
+
+    if not isinstance(compat, dict):
+        raise ValueError("compat must be a mapping")
+
+    _require_keys(compat, ["adr", "mvp", "contracts_version"])
+    return compat
+
+
+def _validate_registry(payload: dict[str, Any]) -> None:
+    _require_keys(payload, ["registry_version", "agents", "intents"])
+
+    compat = _normalize_compat(payload)
+    if compat["adr"] != "ADR-002":
         raise ValueError("agent registry must declare compat.adr=ADR-002")
 
-    if payload["compat.mvp"] != "AI_PLATFORM_MVP_v1":
+    if compat["mvp"] != "AI_PLATFORM_MVP_v1":
         raise ValueError("agent registry must declare compat.mvp=AI_PLATFORM_MVP_v1")
 
     agents = payload["agents"]
@@ -146,6 +265,7 @@ def _validate_intent_coverage(agents: list[dict[str, Any]]) -> None:
 
 
 def _to_registry(payload: dict[str, Any]) -> AgentRegistry:
+    compat = _normalize_compat(payload)
     agents = [
         RegistryAgent(
             agent_id=agent["agent_id"],
@@ -166,9 +286,9 @@ def _to_registry(payload: dict[str, Any]) -> AgentRegistry:
 
     return AgentRegistry(
         registry_version=str(payload["registry_version"]),
-        compat_adr=str(payload["compat.adr"]),
-        compat_mvp=str(payload["compat.mvp"]),
-        compat_contracts_version=str(payload["compat.contracts_version"]),
+        compat_adr=str(compat["adr"]),
+        compat_mvp=str(compat["mvp"]),
+        compat_contracts_version=str(compat["contracts_version"]),
         agents=tuple(agents),
         intents=intents,
     )

@@ -9,6 +9,9 @@ run_graph:
 test:
 	pytest
 
+test-core:
+	pytest tests/test_contracts.py tests/test_graph_execution.py tests/test_skill_checks.py tests/test_agent_registry.py
+
 validate_contracts:
 	pytest tests/test_contracts.py
 

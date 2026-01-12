@@ -25,4 +25,7 @@ make run_graph
 make run_graph
 make validate_contracts
 make test
+make test-core
 ```
+
+`make test` runs the full test suite (may require API dependencies like FastAPI). `make test-core` runs a minimal suite for environments without API deps.
