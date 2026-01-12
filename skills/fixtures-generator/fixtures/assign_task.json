@@ -1,0 +1,14 @@
+{
+  "command_id": "cmd-assign-002",
+  "context": {
+    "assignee": "Sam",
+    "due_date": "2024-01-05"
+  },
+  "task": {
+    "description": "Assign the recycling pickup to Sam.",
+    "priority": "medium",
+    "title": "Take out recycling"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-101"
+}
