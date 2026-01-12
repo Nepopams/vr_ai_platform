@@ -33,6 +33,13 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 - Ensure safe handling for unknown `action` values and payload fields.
 - `contracts/VERSION` is the source of truth for contract schema versions.
 
+## ADR-first, MVP-first, keep diagrams in sync
+
+- Любые изменения должны соответствовать ADR-000/ADR-001 и MVP v1.
+- Диаграммы в `docs/diagrams/` — обязательные артефакты, поддерживайте синхронизацию с кодом.
+- Safe handling unknown action/payload — обязательное правило совместимости (ADR-001).
+- См. `docs/mvp/AI_PLATFORM_MVP_v1.md` и `docs/diagrams/README.md`.
+
 ## ADR-first + MVP-first development
 
 - MVP v1 обязателен для всех изменений в платформе.

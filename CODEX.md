@@ -44,6 +44,16 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 
 См. спецификацию: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
 
+# Architecture & MVP Compliance
+
+- ADR-000 и ADR-001 обязательны для всех изменений платформы.
+- MVP v1 обязателен для всех изменений в `contracts/`, `graphs/`, `agents/`, `skills/`.
+- Диаграммы в `docs/diagrams/` — обязательные артефакты: код и диаграммы должны быть синхронизированы.
+- Любое изменение вне MVP v1 допускается только через новый документ MVP (v2) и,
+  при необходимости, новый ADR и semver-бамп.
+
+Ссылки: `docs/adr/`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.
+
 # Architecture Artifacts (C4 + Sequence)
 
 Диаграммы архитектуры (C4 и sequence) — обязательные артефакты платформы. При изменениях:
