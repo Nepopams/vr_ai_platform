@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hometask.ai/schemas/command.schema.json",
+  "title": "Command",
+  "type": "object",
+  "required": ["command_id", "user_id", "timestamp", "task"],
+  "properties": {
+    "command_id": {"type": "string"},
+    "user_id": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "task": {
+      "type": "object",
+      "required": ["title", "description", "priority"],
+      "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "priority": {"type": "string", "enum": ["low", "medium", "high"]}
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
