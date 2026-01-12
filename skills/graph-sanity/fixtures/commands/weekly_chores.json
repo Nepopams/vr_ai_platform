@@ -1,0 +1,14 @@
+{
+  "command_id": "cmd-graph-001",
+  "user_id": "user-001",
+  "timestamp": "2024-03-01T12:00:00+00:00",
+  "task": {
+    "title": "Plan weekly chores",
+    "description": "Generate a weekly schedule for household tasks.",
+    "priority": "medium"
+  },
+  "context": {
+    "locale": "en-US",
+    "timezone": "UTC"
+  }
+}

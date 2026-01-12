@@ -2,6 +2,10 @@
 
 This document describes the JSON payload formats for HomeTask commands and decisions.
 
+## Schema Versioning
+
+The current contract schema version is tracked in [`contracts/VERSION`](../contracts/VERSION). Update this file whenever the JSON schemas change so downstream tooling can detect schema bumps.
+
 ## Command Payload
 
 **Schema:** `contracts/schemas/command.schema.json`
