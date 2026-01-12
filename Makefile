@@ -1,4 +1,4 @@
-.PHONY: run_graph test validate_contracts audit_decisions bump_contract_version gen_fixtures run_graph_suite release_sanity
+.PHONY: run_graph test validate_contracts contract-checker schema-bump fixtures-generator decision-log-audit graph-sanity release-sanity
 
 run_graph:
 	python -m graphs.core_graph
@@ -7,19 +7,22 @@ test:
 	pytest
 
 validate_contracts:
-	python skills/contract-checker/scripts/validate_contracts.py
+	pytest tests/test_contracts.py
 
-audit_decisions:
-	python skills/decision-log-audit/scripts/audit_decision_logs.py
+contract-checker:
+	python -m skills.contract_checker
 
-bump_contract_version:
-	python schema-bump/scripts/bump_version.py $(PART)
+schema-bump:
+	python -m skills.schema_bump check
 
-gen_fixtures:
-	python fixtures-generator/scripts/generate_fixtures.py
+fixtures-generator:
+	python -m skills.fixtures_generator
 
-run_graph_suite:
-	python graph-sanity/scripts/run_graph_suite.py
+decision-log-audit:
+	python -m skills.decision_log_audit
 
-release_sanity:
-	python release-sanity/scripts/release_sanity.py
+graph-sanity:
+	python -m skills.graph_sanity
+
+release-sanity:
+	python -m skills.release_sanity

@@ -1,0 +1,13 @@
+{
+  "decision_id": "dec-201",
+  "command_id": "cmd-100",
+  "status": "accepted",
+  "actions": [],
+  "reasoning_log": {
+    "command_id": "cmd-100",
+    "steps": [],
+    "model_version": "mock-model-0.1",
+    "prompt_version": "prompt-v0"
+  },
+  "created_at": "2024-05-12T15:31:00Z"
+}
