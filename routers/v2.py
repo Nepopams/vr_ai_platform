@@ -13,6 +13,7 @@ from graphs.core_graph import (
     _default_assignee_id,
     _default_list_id,
 )
+from app.llm.agent_runner_client import shadow_invoke, runner_enabled
 from routers.base import RouterStrategy
 
 
@@ -28,6 +29,9 @@ class RouterV2Pipeline(RouterStrategy):
         item_name = extract_item_name(text) if intent == "add_shopping_item" else None
         task_title = text if intent == "create_task" else None
         capabilities = set(command.get("capabilities", []))
+        if intent == "add_shopping_item" and runner_enabled():
+            trace_id = str(command.get("command_id", "unknown"))
+            shadow_invoke(text=text, context=command.get("context", {}), trace_id=trace_id)
         return {
             "text": text,
             "intent": intent,
