@@ -1,0 +1,36 @@
+{
+  "command_id": "cmd_clarify_001",
+  "user_id": "user_3",
+  "timestamp": "2024-01-01T10:10:00Z",
+  "text": "Сделай это завтра",
+  "capabilities": ["clarify", "start_job"],
+  "context": {
+    "household": {
+      "household_id": "home_2",
+      "members": [
+        {
+          "user_id": "user_3",
+          "display_name": "Мария",
+          "role": "owner",
+          "workload_score": 0.3
+        }
+      ],
+      "zones": [
+        {
+          "zone_id": "zone_general",
+          "name": "Общая зона"
+        }
+      ],
+      "shopping_lists": [
+        {
+          "list_id": "list_week",
+          "name": "Покупки на неделю"
+        }
+      ]
+    },
+    "defaults": {
+      "default_assignee_id": "user_3",
+      "default_list_id": "list_week"
+    }
+  }
+}
