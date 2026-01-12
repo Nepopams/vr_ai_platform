@@ -1,0 +1,36 @@
+{
+  "command_id": "cmd_create_task_001",
+  "user_id": "user_1",
+  "timestamp": "2024-01-01T10:00:00Z",
+  "text": "Поставь задачу помыть посуду сегодня вечером",
+  "capabilities": ["start_job", "propose_create_task", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "home_1",
+      "members": [
+        {
+          "user_id": "user_1",
+          "display_name": "Анна",
+          "role": "owner",
+          "workload_score": 0.4
+        }
+      ],
+      "zones": [
+        {
+          "zone_id": "zone_kitchen",
+          "name": "Кухня"
+        }
+      ],
+      "shopping_lists": [
+        {
+          "list_id": "list_main",
+          "name": "Основной список"
+        }
+      ]
+    },
+    "defaults": {
+      "default_assignee_id": "user_1",
+      "default_list_id": "list_main"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "command_id": "cmd_add_item_001",
+  "user_id": "user_2",
+  "timestamp": "2024-01-01T10:05:00Z",
+  "text": "Добавь молоко в список покупок",
+  "capabilities": ["start_job", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "home_1",
+      "members": [
+        {
+          "user_id": "user_2",
+          "display_name": "Илья",
+          "role": "member",
+          "workload_score": 0.2
+        }
+      ],
+      "zones": [
+        {
+          "zone_id": "zone_kitchen",
+          "name": "Кухня"
+        }
+      ],
+      "shopping_lists": [
+        {
+          "list_id": "list_main",
+          "name": "Основной список"
+        }
+      ]
+    },
+    "defaults": {
+      "default_assignee_id": "user_2",
+      "default_list_id": "list_main"
+    }
+  }
+}
