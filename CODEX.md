@@ -31,6 +31,8 @@ For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development 
 
 - All contract changes must obey semver and backward compatibility rules described in ADR-001.
 - If a solution conflicts with an ADR, stop and capture the decision in a new ADR (Draft) instead of pushing code changes.
+- `agent_registry/agent-registry.yaml` — derived artifact from ADR-002; любые новые intents/agents требуют нового ADR и semver-бампа.
+- Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
 
 See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 

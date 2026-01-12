@@ -1,0 +1,49 @@
+registry_version: "1.0"
+compat:
+  adr: "ADR-002"
+  mvp: "AI_PLATFORM_MVP_v1"
+  contracts_version: "2.0.0"
+agents:
+  - agent_id: "decision-router"
+    role: "decision-router"
+    intents:
+      - "create_task"
+      - "add_shopping_item"
+      - "clarify_needed"
+  - agent_id: "clarifier"
+    role: "clarifier"
+    intents:
+      - "clarify_needed"
+    action: "clarify"
+  - agent_id: "shopping-list"
+    role: "executor"
+    intents:
+      - "add_shopping_item"
+    action: "propose_add_shopping_item"
+  - agent_id: "task"
+    role: "executor"
+    intents:
+      - "create_task"
+    action: "propose_create_task"
+  - agent_id: "job-manager"
+    role: "job-manager"
+    intents:
+      - "create_task"
+      - "add_shopping_item"
+    action: "start_job"
+  - agent_id: "context-provider"
+    role: "context-provider"
+    intents:
+      - "create_task"
+      - "add_shopping_item"
+      - "clarify_needed"
+intents:
+  create_task:
+    required_fields_for_execution:
+      - "payload.task.title"
+  add_shopping_item:
+    required_fields_for_execution:
+      - "payload.item.name"
+  clarify_needed:
+    required_fields_for_execution:
+      - "payload.question"
