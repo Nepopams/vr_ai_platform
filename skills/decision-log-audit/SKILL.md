@@ -1,18 +1,52 @@
 # Decision Log Audit Skill
 
-## Inputs
-- JSONL decision log file.
-- Decision schema in `contracts/schemas/decision.schema.json`.
+## Expected log format
 
-## Outputs
-- Validation report and exit status.
+Decision logs are stored as JSONL where each line is a single JSON object with two top-level keys:
 
-## Steps
-1. Read each JSONL line into a decision payload.
-2. Validate the payload against the decision schema.
-3. Report malformed JSON or schema violations.
+- `decision`: The decision payload that must validate against `contracts/schemas/decision.schema.json`.
+- `metadata`: Required runtime metadata used for auditing and traceability.
 
-## Definition of Done (DoD)
-- All lines in the log file parse as JSON.
-- Each entry validates against the decision schema.
-- Script exits with non-zero status when issues are found.
+### Required metadata fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `command_id` | string | Identifier for the command that produced the decision. Must match `decision.command_id`. |
+| `trace_id` | string | Distributed tracing identifier for the decision run. |
+| `prompt_version` | string | Prompt version used for the decision. Must match `decision.reasoning_log.prompt_version`. |
+| `schema_version` | string | Decision schema or pipeline version. Must match `decision.version`. |
+| `latency_ms` | integer | End-to-end latency in milliseconds. |
+
+### Example entry
+
+```json
+{
+  "decision": {
+    "decision_id": "dec-123",
+    "command_id": "cmd-001",
+    "status": "accepted",
+    "actions": [
+      {"type": "plan", "description": "Provide a mock weekly chores plan."}
+    ],
+    "reasoning_log": {
+      "command_id": "cmd-001",
+      "steps": [
+        "Validate command payload against schema.",
+        "Simulate agent reasoning in mock mode.",
+        "Assemble decision output and attach reasoning log."
+      ],
+      "model_version": "mock-model-0.1",
+      "prompt_version": "prompt-v0"
+    },
+    "created_at": "2024-01-01T00:00:00Z",
+    "version": "v0"
+  },
+  "metadata": {
+    "command_id": "cmd-001",
+    "trace_id": "trace-123",
+    "prompt_version": "prompt-v0",
+    "schema_version": "v0",
+    "latency_ms": 185
+  }
+}
+```
