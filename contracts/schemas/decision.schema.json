@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hometask.ai/schemas/decision.schema.json",
+  "title": "Decision",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "command_id",
+    "status",
+    "actions",
+    "reasoning_log",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "decision_id": {"type": "string"},
+    "command_id": {"type": "string"},
+    "status": {"type": "string", "enum": ["accepted", "rejected", "needs_input"]},
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "properties": {
+          "type": {"type": "string"},
+          "description": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "reasoning_log": {
+      "type": "object",
+      "required": ["command_id", "steps", "model_version", "prompt_version"],
+      "properties": {
+        "command_id": {"type": "string"},
+        "steps": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "model_version": {"type": "string"},
+        "prompt_version": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "version": {"type": "string"}
+  },
+  "additionalProperties": false
+}
