@@ -1,0 +1,14 @@
+{
+  "command_id": "cmd-graph-002",
+  "user_id": "user-042",
+  "timestamp": "2024-03-02T09:30:00+00:00",
+  "task": {
+    "title": "Prepare grocery list",
+    "description": "Draft a grocery list for the week based on pantry inventory.",
+    "priority": "high"
+  },
+  "context": {
+    "locale": "en-US",
+    "household_size": 4
+  }
+}

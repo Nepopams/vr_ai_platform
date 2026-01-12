@@ -1,23 +1,28 @@
-import json
+import importlib.util
 from pathlib import Path
-
-from jsonschema import validate
-
-from graphs.core_graph import process_command, sample_command
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
-DECISION_SCHEMA_PATH = SCHEMA_DIR / "decision.schema.json"
-CONTRACTS_VERSION_PATH = BASE_DIR / "contracts" / "VERSION"
+GRAPH_SUITE_PATH = (
+    BASE_DIR / "skills" / "graph-sanity" / "scripts" / "run_graph_suite.py"
+)
 
 
-def test_process_command_returns_valid_decision():
-    decision_schema = json.loads(DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
-    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
-    decision = process_command(sample_command())
+def _load_graph_suite_module():
+    spec = importlib.util.spec_from_file_location("run_graph_suite", GRAPH_SUITE_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load graph suite module at {GRAPH_SUITE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-    assert decision["command_id"] == "cmd-001"
-    assert decision["schema_version"] == schema_version
-    assert decision["reasoning_log"]["trace_id"]
-    validate(instance=decision, schema=decision_schema)
+
+def test_process_command_returns_valid_decisions():
+    graph_suite = _load_graph_suite_module()
+    fixture_commands = graph_suite.load_fixture_commands()
+    decisions = graph_suite.run_graph_suite()
+
+    assert decisions
+    assert {decision["command_id"] for decision in decisions} == {
+        command["command_id"] for command in fixture_commands
+    }

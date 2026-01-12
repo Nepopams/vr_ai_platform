@@ -1,0 +1,14 @@
+{
+  "command_id": "cmd-shop-003",
+  "context": {
+    "list": "groceries",
+    "quantity": "2 cartons"
+  },
+  "task": {
+    "description": "Add oat milk to the grocery list for this week.",
+    "priority": "low",
+    "title": "Buy oat milk"
+  },
+  "timestamp": "2024-01-02T09:30:00Z",
+  "user_id": "user-102"
+}
