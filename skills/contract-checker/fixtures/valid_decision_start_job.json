@@ -1,0 +1,29 @@
+{
+  "decision_id": "dec-200",
+  "command_id": "cmd-100",
+  "status": "ok",
+  "action": "start_job",
+  "confidence": 0.74,
+  "payload": {
+    "job_id": "job-100",
+    "job_type": "create_task",
+    "proposed_actions": [
+      {
+        "action": "propose_create_task",
+        "payload": {
+          "task": {
+            "title": "Сделай задачу: убрать в гостиной",
+            "assignee_id": "user-77"
+          },
+          "idempotency_key": "cmd-100:task"
+        }
+      }
+    ],
+    "ui_message": "Принял, начинаю выполнение."
+  },
+  "explanation": "Распознан запрос на создание задачи.",
+  "trace_id": "trace-200",
+  "schema_version": "2.0.0",
+  "decision_version": "mvp1-mock-0.1",
+  "created_at": "2024-05-12T15:31:00Z"
+}

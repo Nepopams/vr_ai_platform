@@ -31,3 +31,15 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 
 - ADR-000: AI Platform — Contract-first Intent → Decision Engine (LangGraph)
 - ADR-001: Contract versioning & compatibility policy (CommandDTO/DecisionDTO)
+
+# MVP v1 Compliance
+
+Все изменения в `contracts/`, `graphs/`, `agents/`, `skills/` должны соответствовать MVP v1.
+
+- Нельзя добавлять новые intents/actions/поля без:
+  - обновления документа MVP (через документ \"MVP v2\"),
+  - соблюдения ADR-001 (semver),
+  - обновления fixtures/tests.
+- Если изменение спорное или затрагивает объём MVP — остановитесь и оформите ADR (Draft), а не делайте \"тихое\" изменение.
+
+См. спецификацию: `docs/mvp/AI_PLATFORM_MVP_v1.md`.

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 CHECKS = [
     ("contract-checker", BASE_DIR / "skills" / "contract-checker" / "scripts" / "validate_contracts.py"),

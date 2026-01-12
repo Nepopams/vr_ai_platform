@@ -33,6 +33,11 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 - Ensure safe handling for unknown `action` values and payload fields.
 - `contracts/VERSION` is the source of truth for contract schema versions.
 
+## ADR-first + MVP-first development
+
+- MVP v1 обязателен для всех изменений в платформе.
+- Спецификация: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
+
 ## Skills
 
 Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.

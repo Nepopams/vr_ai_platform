@@ -41,7 +41,11 @@ def test_graph_sanity_runs():
         BASE_DIR / "skills" / "graph-sanity" / "scripts" / "run_graph_suite.py"
     )
     fixture_path = (
-        BASE_DIR / "skills" / "contract-checker" / "fixtures" / "valid_command.json"
+        BASE_DIR
+        / "skills"
+        / "contract-checker"
+        / "fixtures"
+        / "valid_command_create_task.json"
     )
     failures = script["run_graph_suite"]([fixture_path])
     assert failures == []

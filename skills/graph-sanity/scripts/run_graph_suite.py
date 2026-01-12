@@ -32,28 +32,26 @@ def load_decision_schema() -> Dict[str, Any]:
     return json.loads(DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def assert_reasoning_trace_metadata(decision: Dict[str, Any]) -> None:
-    reasoning_log = decision.get("reasoning_log")
-    assert isinstance(reasoning_log, dict), "reasoning_log must be present"
-
-    for key in ("command_id", "steps", "model_version", "prompt_version"):
-        assert reasoning_log.get(key), f"reasoning_log.{key} must be present"
-
-    steps = reasoning_log.get("steps")
-    assert isinstance(steps, list) and steps, "reasoning_log.steps must be non-empty"
-
+def assert_decision_metadata(decision: Dict[str, Any]) -> None:
     assert decision.get("decision_id"), "decision_id must be present"
     assert decision.get("created_at"), "created_at must be present"
-    assert decision.get("version"), "version must be present"
+    assert decision.get("trace_id"), "trace_id must be present"
+    assert decision.get("schema_version"), "schema_version must be present"
+    assert decision.get("decision_version"), "decision_version must be present"
+    assert decision.get("confidence") is not None, "confidence must be present"
 
-    assert (
-        reasoning_log.get("command_id") == decision.get("command_id")
-    ), "reasoning_log.command_id must match decision.command_id"
+    action = decision.get("action")
+    assert action in {
+        "start_job",
+        "propose_create_task",
+        "propose_add_shopping_item",
+        "clarify",
+    }, "action must be in MVP list"
 
 
 def validate_decision(decision: Dict[str, Any], schema: Dict[str, Any]) -> None:
     validate(instance=decision, schema=schema)
-    assert_reasoning_trace_metadata(decision)
+    assert_decision_metadata(decision)
 
 
 def run_graph_suite() -> List[Dict[str, Any]]:

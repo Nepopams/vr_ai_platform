@@ -1,0 +1,16 @@
+{
+  "decision_id": "dec-201",
+  "command_id": "cmd-102",
+  "status": "clarify",
+  "action": "clarify",
+  "confidence": 0.32,
+  "payload": {
+    "question": "Уточните, что нужно сделать: задача или покупка?",
+    "missing_fields": ["intent"]
+  },
+  "explanation": "Интент не распознан.",
+  "trace_id": "trace-201",
+  "schema_version": "2.0.0",
+  "decision_version": "mvp1-mock-0.1",
+  "created_at": "2024-05-12T15:32:00Z"
+}
