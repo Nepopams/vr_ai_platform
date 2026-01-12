@@ -43,3 +43,16 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 - Если изменение спорное или затрагивает объём MVP — остановитесь и оформите ADR (Draft), а не делайте \"тихое\" изменение.
 
 См. спецификацию: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
+
+# Architecture Artifacts (C4 + Sequence)
+
+Диаграммы архитектуры (C4 и sequence) — обязательные артефакты платформы. При изменениях:
+
+- границ ответственности,
+- контейнеров/компонентов (Decision API, Orchestrator, Agents, Logs),
+- контрактов (CommandDTO/DecisionDTO),
+- жизненного цикла (start_job/clarify/async),
+
+необходимо обновлять диаграммы и/или оформлять новый ADR.
+
+Ссылки: `docs/adr/ADR-000-ai-platform-intent-decision-engine.md`, `docs/adr/ADR-001-contract-versioning-compatibility-policy.md`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.
