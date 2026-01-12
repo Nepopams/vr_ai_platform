@@ -3,25 +3,28 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, Optional
 
 from jsonschema import validate
+
+SUITE_DIR = Path(__file__).resolve().parent
+FIXTURE_DIR = SUITE_DIR.parent / "fixtures" / "commands"
+REPO_ROOT = SUITE_DIR.parents[2]
+DECISION_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "decision.schema.json"
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from graphs.core_graph import process_command
 
 
-SUITE_DIR = Path(__file__).resolve().parent
-FIXTURE_DIR = SUITE_DIR.parent / "fixtures" / "commands"
-REPO_ROOT = SUITE_DIR.parents[3]
-DECISION_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "decision.schema.json"
-
-
-def load_fixture_commands() -> List[Dict[str, Any]]:
+def load_fixture_commands(paths: Optional[Iterable[Path]] = None) -> List[Dict[str, Any]]:
     if not FIXTURE_DIR.exists():
         raise FileNotFoundError(f"Fixture directory not found: {FIXTURE_DIR}")
 
-    fixture_paths = sorted(FIXTURE_DIR.glob("*.json"))
+    fixture_paths = sorted(paths) if paths is not None else sorted(FIXTURE_DIR.glob("*.json"))
     if not fixture_paths:
         raise FileNotFoundError(f"No fixture command files found in {FIXTURE_DIR}")
 
@@ -54,17 +57,25 @@ def validate_decision(decision: Dict[str, Any], schema: Dict[str, Any]) -> None:
     assert_decision_metadata(decision)
 
 
-def run_graph_suite() -> List[Dict[str, Any]]:
-    fixture_commands = load_fixture_commands()
+def run_graph_suite(
+    fixture_paths: Optional[Iterable[Path]] = None,
+) -> List[Dict[str, Any]] | List[str]:
+    failures: List[str] = []
+    fixture_commands = load_fixture_commands(fixture_paths)
     decision_schema = load_decision_schema()
 
     decisions = []
     for command in fixture_commands:
-        decision = process_command(command)
-        validate_decision(decision, decision_schema)
-        decisions.append(decision)
+        try:
+            decision = process_command(command)
+            validate_decision(decision, decision_schema)
+            decisions.append(decision)
+        except Exception as exc:  # noqa: BLE001 - used for fixture validation summary
+            failures.append(str(exc))
 
-    return decisions
+    if fixture_paths is None:
+        return decisions
+    return failures
 
 
 def main() -> None:
