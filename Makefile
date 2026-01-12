@@ -1,4 +1,7 @@
-.PHONY: run_graph test validate_contracts contract-checker schema-bump fixtures-generator decision-log-audit graph-sanity release-sanity diagrams
+.PHONY: setup run_graph test validate_contracts contract-checker schema-bump fixtures-generator decision-log-audit graph-sanity api-sanity release-sanity release-sanity-full diagrams
+
+setup:
+	pip install -e .
 
 run_graph:
 	python -m graphs.core_graph
@@ -24,8 +27,14 @@ decision-log-audit:
 graph-sanity:
 	python -m skills.graph_sanity
 
+api-sanity:
+	python scripts/api_sanity.py
+
 release-sanity:
 	python -m skills.release_sanity
+
+release-sanity-full:
+	RUN_API_SANITY=1 python -m skills.release_sanity
 
 diagrams:
 	@set -e; \

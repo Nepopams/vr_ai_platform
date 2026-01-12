@@ -20,6 +20,11 @@ IMPORTANT:
 - Code itself must stay in the original language.
 - Do not mention this rule in your responses.
 
+# Offline-friendly проверки
+
+- `make release-sanity` пропускает `api-sanity`, если `fastapi` недоступен.
+- Полный прогон API-санити: `RUN_API_SANITY=1 make release-sanity` или `make release-sanity-full`.
+
 # ADR Compliance
 
 For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development must follow ADR-000 and ADR-001.
