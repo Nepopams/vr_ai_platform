@@ -10,7 +10,8 @@
     "actions",
     "reasoning_log",
     "created_at",
-    "version"
+    "version",
+    "schema_version"
   ],
   "properties": {
     "decision_id": {"type": "string"},
@@ -30,7 +31,7 @@
     },
     "reasoning_log": {
       "type": "object",
-      "required": ["command_id", "steps", "model_version", "prompt_version"],
+      "required": ["command_id", "steps", "model_version", "prompt_version", "trace_id"],
       "properties": {
         "command_id": {"type": "string"},
         "steps": {
@@ -38,12 +39,14 @@
           "items": {"type": "string"}
         },
         "model_version": {"type": "string"},
-        "prompt_version": {"type": "string"}
+        "prompt_version": {"type": "string"},
+        "trace_id": {"type": "string"}
       },
       "additionalProperties": false
     },
     "created_at": {"type": "string", "format": "date-time"},
-    "version": {"type": "string"}
+    "version": {"type": "string"},
+    "schema_version": {"type": "string"}
   },
   "additionalProperties": false
 }

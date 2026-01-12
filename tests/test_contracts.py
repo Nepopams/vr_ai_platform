@@ -7,6 +7,7 @@ from jsonschema import validate
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
+CONTRACTS_VERSION_PATH = BASE_DIR / "contracts" / "VERSION"
 
 
 def load_schema(name: str) -> dict:
@@ -32,6 +33,7 @@ def test_command_schema_allows_example_payload():
 
 def test_decision_schema_allows_example_payload():
     decision_schema = load_schema("decision.schema.json")
+    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
     example_decision = {
         "decision_id": "dec-123",
         "command_id": "cmd-001",
@@ -51,9 +53,11 @@ def test_decision_schema_allows_example_payload():
             ],
             "model_version": "mock-model-0.1",
             "prompt_version": "prompt-v0",
+            "trace_id": "trace-123",
         },
         "created_at": datetime.now(timezone.utc).isoformat(),
         "version": "v0",
+        "schema_version": schema_version,
     }
 
     validate(instance=example_decision, schema=decision_schema)
