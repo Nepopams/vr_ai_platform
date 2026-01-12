@@ -1,6 +1,14 @@
 # Agent Architecture
 
-The HomeTask AI System is designed to be modular. Agents are lightweight components that can be orchestrated by the core graph.
+The HomeTask AI platform is designed to be modular. Agents are lightweight components that can be orchestrated by the core graph.
+
+## Project Summary
+
+HomeTask is an AI platform that routes user commands through a graph of specialized agents to produce structured decisions.
+
+## Do Not Break Contracts
+
+Do not break contracts. Any change to contract definitions or their consumers must preserve backward compatibility unless a coordinated, versioned change is explicitly planned and validated.
 
 ## How Agents Are Invoked
 
@@ -18,3 +26,15 @@ The HomeTask AI System is designed to be modular. Agents are lightweight compone
 
 - Agents should include a `version` identifier.
 - The pipeline should record agent versions in the reasoning log whenever an agent is invoked.
+
+## Skills
+
+Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.
+
+## Canonical Commands
+
+- `make validate_contracts`
+- `make run_graph`
+- `make run_graph_suite`
+- `make audit_decisions`
+- `make release_sanity`
