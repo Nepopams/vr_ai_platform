@@ -4,7 +4,6 @@
 
 | Файл | Тип | Назначение |
 | --- | --- | --- |
-| `1.puml` | другое (плейсхолдер) | Пустой файл, не содержит диаграммы. |
 | `docs/plantuml/c4-lvl1.puml` | C4 L1 (System Context) | Контекст системы: User, клиент HomeTask, продуктовый backend и AI Platform. |
 | `docs/plantuml/c4-lvl2.puml` | C4 L2 (Containers) | Контейнеры HomeTask Product и AI Platform, их взаимодействия и интерфейсы. |
 | `docs/plantuml/c4-lvl3.puml` | C4 L3 (Components) | Компоненты Decision API и MVP-graph (nodes/runner/validator/trace). |
