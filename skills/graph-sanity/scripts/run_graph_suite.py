@@ -1,53 +1,78 @@
-import argparse
+"""Run the core graph suite against fixture commands."""
+
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import Any, Dict, List
 
-from jsonschema import Draft202012Validator
+from jsonschema import validate
 
 from graphs.core_graph import process_command
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-DEFAULT_FIXTURE = BASE_DIR / "skills" / "contract-checker" / "fixtures" / "valid_command.json"
-SCHEMA_PATH = BASE_DIR / "contracts" / "schemas" / "decision.schema.json"
+SUITE_DIR = Path(__file__).resolve().parent
+FIXTURE_DIR = SUITE_DIR.parent / "fixtures" / "commands"
+REPO_ROOT = SUITE_DIR.parents[3]
+DECISION_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "decision.schema.json"
 
 
-def run_graph_suite(fixtures: list[Path]) -> list[str]:
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    validator = Draft202012Validator(schema)
-    failures: list[str] = []
+def load_fixture_commands() -> List[Dict[str, Any]]:
+    if not FIXTURE_DIR.exists():
+        raise FileNotFoundError(f"Fixture directory not found: {FIXTURE_DIR}")
 
-    for fixture in fixtures:
-        payload = json.loads(fixture.read_text(encoding="utf-8"))
-        decision = process_command(payload)
-        errors = sorted(validator.iter_errors(decision), key=lambda err: err.path)
-        if errors:
-            message = ", ".join(error.message for error in errors)
-            failures.append(f"{fixture.name} produced invalid decision: {message}")
+    fixture_paths = sorted(FIXTURE_DIR.glob("*.json"))
+    if not fixture_paths:
+        raise FileNotFoundError(f"No fixture command files found in {FIXTURE_DIR}")
 
-    return failures
+    return [json.loads(path.read_text(encoding="utf-8")) for path in fixture_paths]
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Run core graph sanity suite.")
-    parser.add_argument(
-        "fixtures",
-        nargs="*",
-        type=Path,
-        default=[DEFAULT_FIXTURE],
-        help="Command fixture JSON files.",
-    )
-    args = parser.parse_args()
+def load_decision_schema() -> Dict[str, Any]:
+    return json.loads(DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
 
-    failures = run_graph_suite(args.fixtures)
-    if failures:
-        for failure in failures:
-            print(f"ERROR: {failure}")
-        return 1
 
-    print("Graph sanity suite passed.")
-    return 0
+def assert_reasoning_trace_metadata(decision: Dict[str, Any]) -> None:
+    reasoning_log = decision.get("reasoning_log")
+    assert isinstance(reasoning_log, dict), "reasoning_log must be present"
+
+    for key in ("command_id", "steps", "model_version", "prompt_version"):
+        assert reasoning_log.get(key), f"reasoning_log.{key} must be present"
+
+    steps = reasoning_log.get("steps")
+    assert isinstance(steps, list) and steps, "reasoning_log.steps must be non-empty"
+
+    assert decision.get("decision_id"), "decision_id must be present"
+    assert decision.get("created_at"), "created_at must be present"
+    assert decision.get("version"), "version must be present"
+
+    assert (
+        reasoning_log.get("command_id") == decision.get("command_id")
+    ), "reasoning_log.command_id must match decision.command_id"
+
+
+def validate_decision(decision: Dict[str, Any], schema: Dict[str, Any]) -> None:
+    validate(instance=decision, schema=schema)
+    assert_reasoning_trace_metadata(decision)
+
+
+def run_graph_suite() -> List[Dict[str, Any]]:
+    fixture_commands = load_fixture_commands()
+    decision_schema = load_decision_schema()
+
+    decisions = []
+    for command in fixture_commands:
+        decision = process_command(command)
+        validate_decision(decision, decision_schema)
+        decisions.append(decision)
+
+    return decisions
+
+
+def main() -> None:
+    decisions = run_graph_suite()
+    print(json.dumps(decisions, indent=2))
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
