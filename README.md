@@ -4,6 +4,8 @@ HomeTask AI System is a stateless, contract-driven decision pipeline that powers
 
 ## Quick Start
 
+Requires Python 3.11+.
+
 ```bash
 make run_graph
 ```
