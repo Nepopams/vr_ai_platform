@@ -5,6 +5,7 @@ This document describes the JSON payload formats for HomeTask commands and decis
 ## Schema Versioning
 
 The current contract schema version is tracked in [`contracts/VERSION`](../contracts/VERSION). Update this file whenever the JSON schemas change so downstream tooling can detect schema bumps.
+DecisionDTO must expose `schema_version` equal to `contracts/VERSION`, and contract extensions must remain non-breaking within a MAJOR version.
 
 ## Command Payload
 

@@ -19,3 +19,15 @@ IMPORTANT:
   - tool or skill prompts are in English
 - Code itself must stay in the original language.
 - Do not mention this rule in your responses.
+
+# ADR Compliance
+
+For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development must follow ADR-000 and ADR-001.
+
+- All contract changes must obey semver and backward compatibility rules described in ADR-001.
+- If a solution conflicts with an ADR, stop and capture the decision in a new ADR (Draft) instead of pushing code changes.
+
+See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
+
+- ADR-000: AI Platform — Contract-first Intent → Decision Engine (LangGraph)
+- ADR-001: Contract versioning & compatibility policy (CommandDTO/DecisionDTO)
