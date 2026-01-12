@@ -10,12 +10,14 @@ def build_reasoning_log(
     steps: Iterable[str],
     model_version: str,
     prompt_version: str,
+    trace_id: str,
 ) -> Dict[str, object]:
     return {
         "command_id": command_id,
         "steps": list(steps),
         "model_version": model_version,
         "prompt_version": prompt_version,
+        "trace_id": trace_id,
     }
 
 
