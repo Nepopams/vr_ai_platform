@@ -42,6 +42,10 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 
 Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.
 
+## Keep diagrams in sync
+
+If you change `contracts/`, `graphs/`, `agents/`, or `api`, check whether C4/sequence diagrams need updates. If you did not update diagrams, explain why in the commit/PR description.
+
 ## Canonical Commands
 
 - `make validate_contracts`
