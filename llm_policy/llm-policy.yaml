@@ -5,11 +5,15 @@ compat:
 profiles:
   cheap:
     description: "быстрая/дешёвая модель"
+  partial_trust:
+    description: "partial trust corridor (shopping add-item)"
   reliable:
     description: "надёжная модель"
 tasks:
   shopping_extraction:
     description: "Извлечение наименования товара из пользовательского текста"
+  partial_trust_shopping:
+    description: "LLM-first кандидат для shopping add-item corridor"
   assist_normalization:
     description: "Нормализация пользовательского текста для assist-режима"
   assist_entity_extraction:
@@ -19,6 +23,21 @@ tasks:
 routing:
   shopping_extraction:
     cheap:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-20b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 2000
+      project: "${YANDEX_FOLDER_ID}"
+    reliable:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-120b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 4000
+      project: "${YANDEX_FOLDER_ID}"
+  partial_trust_shopping:
+    partial_trust:
       provider: "yandex_ai_studio"
       model: "gpt-oss-20b"
       temperature: 0.2

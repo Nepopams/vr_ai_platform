@@ -9,6 +9,10 @@ dependencies = [
   "httpx",
   "jsonschema",
   "openai",
+]
+
+[project.optional-dependencies]
+dev = [
   "pytest",
 ]
 

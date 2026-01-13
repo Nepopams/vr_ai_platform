@@ -281,6 +281,87 @@ Shadow Router также учитывает `LLM_POLICY_ENABLED`. Если по�
 
 Примечание: в MVP `fallback_chain` является декларативной схемой для будущего расширения; фактическая эскалация реализована фиксированным алгоритмом cheap → repair → reliable.
 
+## Partial Trust (PHASE 1 scaffolding)
+
+На этапе PHASE 1 добавлена инфраструктура (конфиг + risk-логгер) без влияния на DecisionDTO.
+По умолчанию Partial Trust выключен.
+
+### Флаги
+
+- `PARTIAL_TRUST_ENABLED=false` — главный выключатель.
+- `PARTIAL_TRUST_INTENT=add_shopping_item` — коридор (строго один intent).
+- `PARTIAL_TRUST_SAMPLE_RATE=0.01` — доля команд для выборки.
+- `PARTIAL_TRUST_TIMEOUT_MS=200` — таймаут LLM-first кандидата (для будущего этапа).
+- `PARTIAL_TRUST_PROFILE_ID=` — профиль в `llm_policy` (для будущего этапа).
+- `PARTIAL_TRUST_RISK_LOG_PATH=logs/partial_trust_risk.jsonl` — путь к risk JSONL логам.
+
+### Stable sampling
+
+Выборка выполняется детерминированно: берётся hash от `command_id` и сравнивается с `sample_rate`.
+Одинаковый `command_id` всегда даёт одинаковое решение при одном и том же `sample_rate`.
+`sample_rate=0` — никогда не выбирать, `sample_rate=1` — всегда выбирать.
+
+### Формат risk logs (partial_trust_risk.jsonl)
+
+Запись содержит только безопасные поля:
+
+- `timestamp`, `trace_id`, `command_id`
+- `corridor_intent`, `sample_rate`, `sampled`
+- `status` (`accepted_llm|fallback_deterministic|skipped|error`)
+- `reason_code`
+- `latency_ms`
+- `model_meta`
+- `baseline_summary`, `llm_summary`, `diff_summary`
+
+**В логах нет** пользовательского текста и raw output LLM.
+
+LLM policy включает internal task `partial_trust_shopping` и профиль `partial_trust`.
+Идентификатор профиля задаётся флагом `PARTIAL_TRUST_PROFILE_ID`.
+
+### Как включать Partial Trust
+
+Минимальный набор флагов:
+
+- `PARTIAL_TRUST_ENABLED=true`
+- `PARTIAL_TRUST_INTENT=add_shopping_item`
+- `PARTIAL_TRUST_SAMPLE_RATE=0.01`
+- `PARTIAL_TRUST_TIMEOUT_MS=200`
+- `PARTIAL_TRUST_PROFILE_ID=partial_trust`
+- `LLM_POLICY_ENABLED=true`
+
+### Rollout (пример)
+
+1) `PARTIAL_TRUST_SAMPLE_RATE=0.01`
+2) `PARTIAL_TRUST_SAMPLE_RATE=0.05`
+3) `PARTIAL_TRUST_SAMPLE_RATE=0.10`
+
+Откат: установить `PARTIAL_TRUST_ENABLED=false`.
+
+### Status/Reason codes в risk logs
+
+Статусы:
+
+- `accepted_llm` — LLM-кандидат принят.
+- `fallback_deterministic` — LLM-кандидат отклонён, возвращён baseline.
+- `skipped` — Partial Trust выключен/не применим (не коридор/нет политики).
+- `not_sampled` — коридор подходит, но команда не попала в выборку.
+- `error` — непредвиденная ошибка, возвращён baseline.
+
+Причины (reason_code):
+
+- `accepted`
+- `corridor_mismatch`
+- `capability_mismatch`
+- `policy_disabled`
+- `not_sampled`
+- `timeout`
+- `llm_error`
+- `invalid_schema`
+- `invalid_item_name`
+- `list_id_unknown`
+- `low_confidence`
+- `candidate_missing`
+
 ## LLM Assist Mode (Normalizer++ / Entities / Clarify)
 
 Assist Mode помогает улучшать нормализацию и извлечение сущностей, но **не влияет** на выбор `action`.
