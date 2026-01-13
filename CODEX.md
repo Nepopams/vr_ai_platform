@@ -39,6 +39,7 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 - ADR-000: AI Platform — Contract-first Intent → Decision Engine (LangGraph)
 - ADR-001: Contract versioning & compatibility policy (CommandDTO/DecisionDTO)
 - ADR-002: Agent model & execution boundaries (MVP)
+- ADR-003: LLM model policy registry & escalation
 
 # MVP v1 Compliance
 

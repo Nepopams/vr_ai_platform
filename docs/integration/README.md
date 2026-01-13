@@ -181,6 +181,69 @@ AI Platform **не выполняет** эти действия сама — о�
 - пригодность решения без учета актуальности вашего `context`;
 - корректность при нарушении схемы запроса или при пустом/неконсистентном контексте.
 
+## LLM Model Policy (ADR-003)
+
+- Это внутренний механизм платформы, не часть внешних контрактов.
+- В MVP предполагается file-based реестр (llm-policy.yaml) и эскалация cheap → repair → reliable.
+- До реализации политики допускается временная provider-level конфигурация, но любые расширения должны ориентироваться на ADR-003.
+- Политика выключена по умолчанию и включается переменными окружения:
+  - `LLM_POLICY_ENABLED=true`
+  - `LLM_POLICY_PATH=llm_policy/llm-policy.yaml`
+  - `LLM_POLICY_PROFILE=cheap`
+  - `LLM_POLICY_ALLOW_PLACEHOLDERS=true` (только для шаблонных файлов, по умолчанию запрещено)
+  - Для использования политики вызывайте high-level API (например, `llm_policy.tasks`), а не `runtime.py` напрямую.
+
+Пример минимального policy-файла (шаблон, реальные значения передаются через `LLM_POLICY_PATH`):
+
+```yaml
+schema_version: 1
+compat:
+  adr: "ADR-003"
+  note: "internal-only"
+profiles:
+  cheap: {}
+  reliable: {}
+tasks:
+  shopping_extraction: {}
+routing:
+  shopping_extraction:
+    cheap:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-20b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 2000
+      project: "${YANDEX_FOLDER_ID}"
+    reliable:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-120b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 4000
+      project: "${YANDEX_FOLDER_ID}"
+fallback_chain:
+  - event: "invalid_json"
+    action: "repair_retry"
+    max_retries: 1
+  - event: "schema_validation_failed"
+    action: "repair_retry"
+    max_retries: 1
+  - event: "invalid_json"
+    action: "escalate_to"
+    profile: "reliable"
+  - event: "schema_validation_failed"
+    action: "escalate_to"
+    profile: "reliable"
+  - event: "timeout"
+    action: "return_error"
+  - event: "llm_unavailable"
+    action: "return_error"
+  - event: "llm_error"
+    action: "return_error"
+```
+
+Примечание: в MVP `fallback_chain` является декларативной схемой для будущего расширения; фактическая эскалация реализована фиксированным алгоритмом cheap → repair → reliable.
+
 ## Связанные документы
 
 - Контекст: `docs/integration/context_v1.md`

@@ -9,7 +9,6 @@ from graphs.core_graph import (
     build_proposed_action,
     build_start_job_decision,
     detect_intent,
-    extract_item_name,
     _default_assignee_id,
     _default_list_id,
 )
@@ -26,7 +25,11 @@ class RouterV2Pipeline(RouterStrategy):
     def normalize(self, command: Dict[str, Any]) -> Dict[str, Any]:
         text = command.get("text", "").strip()
         intent = detect_intent(text) if text else "clarify_needed"
-        item_name = extract_item_name(text) if intent == "add_shopping_item" else None
+        item_name = (
+            extract_shopping_item_name(text, trace_id=command.get("trace_id")).item_name
+            if intent == "add_shopping_item"
+            else None
+        )
         task_title = text if intent == "create_task" else None
         capabilities = set(command.get("capabilities", []))
         if intent == "add_shopping_item" and runner_enabled():
