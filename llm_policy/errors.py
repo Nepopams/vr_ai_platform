@@ -1,0 +1,2 @@
+class LlmUnavailableError(RuntimeError):
+    pass
