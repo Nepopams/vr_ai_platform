@@ -1,0 +1,26 @@
+{
+  "command_id": "cmd-graph-001",
+  "user_id": "user-001",
+  "timestamp": "2024-03-01T12:00:00+00:00",
+  "text": "Нужно убрать кухню и составить план домашних дел",
+  "capabilities": [
+    "start_job",
+    "propose_create_task",
+    "propose_add_shopping_item",
+    "clarify"
+  ],
+  "context": {
+    "household": {
+      "household_id": "house-001",
+      "members": [
+        {"user_id": "user-001", "display_name": "Оля"}
+      ],
+      "zones": [
+        {"zone_id": "zone-kitchen", "name": "Кухня"}
+      ]
+    },
+    "defaults": {
+      "default_assignee_id": "user-001"
+    }
+  }
+}

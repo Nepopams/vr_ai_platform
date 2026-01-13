@@ -1,0 +1,15 @@
+{
+  "decision_id": "dec-202",
+  "command_id": "cmd-100",
+  "status": "ok",
+  "confidence": 0.7,
+  "payload": {
+    "job_id": "job-101",
+    "job_type": "create_task"
+  },
+  "explanation": "Нет action.",
+  "trace_id": "trace-202",
+  "schema_version": "2.0.0",
+  "decision_version": "mvp1-mock-0.1",
+  "created_at": "2024-05-12T15:33:00Z"
+}
