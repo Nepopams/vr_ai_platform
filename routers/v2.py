@@ -12,15 +12,20 @@ from graphs.core_graph import (
     _default_assignee_id,
     _default_list_id,
 )
+from llm_policy.tasks import extract_shopping_item_name
 from app.llm.agent_runner_client import shadow_invoke, runner_enabled
 from routers.base import RouterStrategy
+from routers.assist.runner import apply_assist_hints
+from routers.shadow_router import start_shadow_router
 
 
 class RouterV2Pipeline(RouterStrategy):
     def decide(self, command: Dict[str, Any]) -> Dict[str, Any]:
         normalized = self.normalize(command)
-        plan = self.plan(normalized, command)
-        return self.validate_and_build(plan, normalized, command)
+        start_shadow_router(command, normalized)
+        assist = apply_assist_hints(command, normalized)
+        plan = self.plan(assist.normalized, command)
+        return self.validate_and_build(plan, assist.normalized, command, assist)
 
     def normalize(self, command: Dict[str, Any]) -> Dict[str, Any]:
         text = command.get("text", "").strip()
@@ -84,6 +89,7 @@ class RouterV2Pipeline(RouterStrategy):
         plan: Dict[str, Any],
         normalized: Dict[str, Any],
         command: Dict[str, Any],
+        assist=None,
     ) -> Dict[str, Any]:
         capabilities: Set[str] = normalized["capabilities"]
         text = normalized["text"]
@@ -92,14 +98,22 @@ class RouterV2Pipeline(RouterStrategy):
         if "start_job" not in capabilities:
             return build_clarify_decision(
                 command,
-                question="Какие действия разрешены для выполнения?",
+                question=self._clarify_question(
+                    "Какие действия разрешены для выполнения?",
+                    assist,
+                    missing_fields=None,
+                ),
                 explanation="Отсутствует capability start_job.",
             )
 
         if not text:
             return build_clarify_decision(
                 command,
-                question="Опишите, что нужно сделать: задача или покупка?",
+                question=self._clarify_question(
+                    "Опишите, что нужно сделать: задача или покупка?",
+                    assist,
+                    missing_fields=["text"],
+                ),
                 missing_fields=["text"],
                 explanation="Текст команды пустой.",
             )
@@ -108,7 +122,11 @@ class RouterV2Pipeline(RouterStrategy):
             if not normalized.get("item_name"):
                 return build_clarify_decision(
                     command,
-                    question="Какой товар добавить в список покупок?",
+                    question=self._clarify_question(
+                        "Какой товар добавить в список покупок?",
+                        assist,
+                        missing_fields=["item.name"],
+                    ),
                     missing_fields=["item.name"],
                     explanation="Не удалось извлечь название товара.",
                 )
@@ -123,7 +141,11 @@ class RouterV2Pipeline(RouterStrategy):
             if not normalized.get("task_title"):
                 return build_clarify_decision(
                     command,
-                    question="Какую задачу нужно создать?",
+                    question=self._clarify_question(
+                        "Какую задачу нужно создать?",
+                        assist,
+                        missing_fields=["task.title"],
+                    ),
                     missing_fields=["task.title"],
                     explanation="Не удалось получить описание задачи.",
                 )
@@ -136,6 +158,19 @@ class RouterV2Pipeline(RouterStrategy):
 
         return build_clarify_decision(
             command,
-            question="Уточните, что нужно сделать: задача или покупка?",
+            question=self._clarify_question(
+                "Уточните, что нужно сделать: задача или покупка?",
+                assist,
+                missing_fields=None,
+            ),
             explanation="Интент не распознан.",
         )
+
+    @staticmethod
+    def _clarify_question(default_question: str, assist, missing_fields: Optional[List[str]]) -> str:
+        if not assist or not assist.clarify_question:
+            return default_question
+        if missing_fields and assist.clarify_missing_fields:
+            if not set(assist.clarify_missing_fields).issubset(set(missing_fields)):
+                return default_question
+        return assist.clarify_question

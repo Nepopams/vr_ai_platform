@@ -10,8 +10,59 @@ profiles:
 tasks:
   shopping_extraction:
     description: "Извлечение наименования товара из пользовательского текста"
+  assist_normalization:
+    description: "Нормализация пользовательского текста для assist-режима"
+  assist_entity_extraction:
+    description: "Извлечение сущностей для assist-режима"
+  assist_clarify:
+    description: "Генерация уточняющего вопроса для assist-режима"
 routing:
   shopping_extraction:
+    cheap:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-20b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 2000
+      project: "${YANDEX_FOLDER_ID}"
+    reliable:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-120b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 4000
+      project: "${YANDEX_FOLDER_ID}"
+  assist_normalization:
+    cheap:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-20b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 2000
+      project: "${YANDEX_FOLDER_ID}"
+    reliable:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-120b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 4000
+      project: "${YANDEX_FOLDER_ID}"
+  assist_entity_extraction:
+    cheap:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-20b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 2000
+      project: "${YANDEX_FOLDER_ID}"
+    reliable:
+      provider: "yandex_ai_studio"
+      model: "gpt-oss-120b"
+      temperature: 0.2
+      max_tokens: 256
+      timeout_ms: 4000
+      project: "${YANDEX_FOLDER_ID}"
+  assist_clarify:
     cheap:
       provider: "yandex_ai_studio"
       model: "gpt-oss-20b"

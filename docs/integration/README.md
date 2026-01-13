@@ -242,7 +242,81 @@ fallback_chain:
     action: "return_error"
 ```
 
+## Shadow LLM Router (observability, zero-impact)
+
+Shadow Router запускается параллельно RouterV2 и **никогда** не влияет на DecisionDTO.
+Он работает в best-effort режиме и пишет только агрегированные метаданные.
+
+### Флаги
+
+- `SHADOW_ROUTER_ENABLED=false` — главный флаг включения.
+- `SHADOW_ROUTER_TIMEOUT_MS=150` — soft-limit для метрики latency.
+- `SHADOW_ROUTER_LOG_PATH=logs/shadow_router.jsonl` — путь к JSONL логам.
+- `SHADOW_ROUTER_MODE=shadow` — допустимое значение (прочие режимы считаются invalid).
+
+Shadow Router также учитывает `LLM_POLICY_ENABLED`. Если политика выключена —
+пишется запись со статусом `skipped` и `error_type=policy_disabled`.
+
+### Формат JSONL (shadow_router.jsonl)
+
+Запись содержит только безопасные поля:
+
+- `timestamp`, `trace_id`, `command_id`
+- `router_version`, `router_strategy`
+- `status` (`ok|skipped|error`), `latency_ms`, `error_type`
+- `suggested_intent`, `missing_fields`, `clarify_question`
+- `entities_summary` (только ключи/счётчики, без raw text)
+- `confidence`, `model_meta`
+- `baseline_intent`, `baseline_action`, `baseline_job_type`
+
+**В логах нет** пользовательского текста и raw output LLM.
+
+### Метрики из JSONL
+
+- **intent_match_rate**: доля записей, где `suggested_intent == baseline_intent`.
+- **entity_coverage**: доля записей, где `entities_summary.keys` содержит ожидаемые
+  сущности для intent (например, `item` для `add_shopping_item`).
+- **latency p50/p95**: перцентили по `latency_ms` для `status=ok|error`.
+- **error_classes**: распределение `error_type` по всем `status=error`.
+
 Примечание: в MVP `fallback_chain` является декларативной схемой для будущего расширения; фактическая эскалация реализована фиксированным алгоритмом cheap → repair → reliable.
+
+## LLM Assist Mode (Normalizer++ / Entities / Clarify)
+
+Assist Mode помогает улучшать нормализацию и извлечение сущностей, но **не влияет** на выбор `action`.
+Финальное решение остаётся за детерминированным RouterV2.
+
+### Флаги
+
+- `ASSIST_MODE_ENABLED=false` — общий выключатель.
+- `ASSIST_NORMALIZATION_ENABLED=false` — LLM Normalizer++.
+- `ASSIST_ENTITY_EXTRACTION_ENABLED=false` — LLM Entity Assist.
+- `ASSIST_CLARIFY_ENABLED=false` — LLM Clarify Suggestor.
+- `ASSIST_TIMEOUT_MS=200` — best-effort таймаут для каждого шага.
+- `ASSIST_LOG_PATH=logs/assist.jsonl` — JSONL лог assist-шага.
+
+### Принципы
+
+- LLM выдаёт **hints**, детерминированный слой решает, принимать ли их.
+- Любые ошибки/таймауты → silent fallback на deterministic-only поведение.
+- В логах **нет** raw user text и raw LLM output.
+
+### Формат assist-логов (assist.jsonl)
+
+- `step`: `normalizer|entities|clarify`
+- `status`: `ok|skipped|error`
+- `accepted`: принят ли hint детерминированным слоем
+- `latency_ms`, `error_type`
+- `entities_summary`, `missing_fields_count`, `clarify_used`
+- `assist_version`
+
+### Метрики assist-качества
+
+- снижение числа `clarify` итераций;
+- рост доли `start_job`;
+- улучшение entity coverage (доля заполненных сущностей);
+- latency p50/p95 по шагам assist;
+- error_classes по `error_type`.
 
 ## Связанные документы
 
