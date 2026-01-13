@@ -242,6 +242,43 @@ fallback_chain:
     action: "return_error"
 ```
 
+## Shadow LLM Router (observability, zero-impact)
+
+Shadow Router запускается параллельно RouterV2 и **никогда** не влияет на DecisionDTO.
+Он работает в best-effort режиме и пишет только агрегированные метаданные.
+
+### Флаги
+
+- `SHADOW_ROUTER_ENABLED=false` — главный флаг включения.
+- `SHADOW_ROUTER_TIMEOUT_MS=150` — soft-limit для метрики latency.
+- `SHADOW_ROUTER_LOG_PATH=logs/shadow_router.jsonl` — путь к JSONL логам.
+- `SHADOW_ROUTER_MODE=shadow` — допустимое значение (прочие режимы считаются invalid).
+
+Shadow Router также учитывает `LLM_POLICY_ENABLED`. Если политика выключена —
+пишется запись со статусом `skipped` и `error_type=policy_disabled`.
+
+### Формат JSONL (shadow_router.jsonl)
+
+Запись содержит только безопасные поля:
+
+- `timestamp`, `trace_id`, `command_id`
+- `router_version`, `router_strategy`
+- `status` (`ok|skipped|error`), `latency_ms`, `error_type`
+- `suggested_intent`, `missing_fields`, `clarify_question`
+- `entities_summary` (только ключи/счётчики, без raw text)
+- `confidence`, `model_meta`
+- `baseline_intent`, `baseline_action`, `baseline_job_type`
+
+**В логах нет** пользовательского текста и raw output LLM.
+
+### Метрики из JSONL
+
+- **intent_match_rate**: доля записей, где `suggested_intent == baseline_intent`.
+- **entity_coverage**: доля записей, где `entities_summary.keys` содержит ожидаемые
+  сущности для intent (например, `item` для `add_shopping_item`).
+- **latency p50/p95**: перцентили по `latency_ms` для `status=ok|error`.
+- **error_classes**: распределение `error_type` по всем `status=error`.
+
 Примечание: в MVP `fallback_chain` является декларативной схемой для будущего расширения; фактическая эскалация реализована фиксированным алгоритмом cheap → repair → reliable.
 
 ## Связанные документы

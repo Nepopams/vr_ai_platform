@@ -12,13 +12,16 @@ from graphs.core_graph import (
     _default_assignee_id,
     _default_list_id,
 )
+from llm_policy.tasks import extract_shopping_item_name
 from app.llm.agent_runner_client import shadow_invoke, runner_enabled
 from routers.base import RouterStrategy
+from routers.shadow_router import start_shadow_router
 
 
 class RouterV2Pipeline(RouterStrategy):
     def decide(self, command: Dict[str, Any]) -> Dict[str, Any]:
         normalized = self.normalize(command)
+        start_shadow_router(command, normalized)
         plan = self.plan(normalized, command)
         return self.validate_and_build(plan, normalized, command)
 
