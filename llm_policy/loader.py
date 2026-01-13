@@ -35,13 +35,17 @@ _ALLOWED_ACTIONS = {"repair_retry", "escalate_to", "return_error"}
 
 class LlmPolicyLoader:
     @staticmethod
-    def load(enabled: bool, path_override: str | None = None) -> LlmPolicy | None:
+    def load(
+        enabled: bool,
+        path_override: str | None = None,
+        allow_placeholders: bool = False,
+    ) -> LlmPolicy | None:
         if not enabled:
             return None
 
         policy_path = Path(path_override) if path_override else _default_policy_path()
         payload = _load_policy_payload(policy_path)
-        _validate_policy(payload)
+        _validate_policy(payload, allow_placeholders=allow_placeholders)
         return _to_policy(payload)
 
 
@@ -170,7 +174,7 @@ def _parse_scalar(value: str) -> str:
     return value
 
 
-def _validate_policy(payload: dict[str, Any]) -> None:
+def _validate_policy(payload: dict[str, Any], *, allow_placeholders: bool) -> None:
     _require_keys(payload, ["schema_version", "compat", "profiles", "tasks", "routing", "fallback_chain"])
 
     extra_keys = set(payload) - _ALLOWED_TOP_LEVEL_KEYS
@@ -220,6 +224,8 @@ def _validate_policy(payload: dict[str, Any]) -> None:
             if extra_spec:
                 extras = ", ".join(sorted(extra_spec))
                 raise ValueError(f"unexpected routing fields for {task_id}.{profile}: {extras}")
+            if not allow_placeholders:
+                _validate_no_placeholders(spec, task_id=task_id, profile=profile)
 
     fallback_chain = payload["fallback_chain"]
     if not isinstance(fallback_chain, list):
@@ -310,3 +316,17 @@ def _require_keys(payload: Mapping[str, Any], keys: list[str]) -> None:
     for key in keys:
         if key not in payload:
             raise ValueError(f"missing required field: {key}")
+
+
+def _validate_no_placeholders(spec: Mapping[str, Any], *, task_id: str, profile: str) -> None:
+    fields = ("model", "project", "base_url")
+    for field in fields:
+        value = spec.get(field)
+        if isinstance(value, str) and _has_placeholder(value):
+            raise ValueError(
+                f"placeholders are not allowed in {task_id}.{profile}.{field} when policy is enabled"
+            )
+
+
+def _has_placeholder(value: str) -> bool:
+    return "${" in value or "<" in value and ">" in value

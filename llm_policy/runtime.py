@@ -8,6 +8,7 @@ from typing import Mapping
 from jsonschema import ValidationError, validate
 
 from llm_policy.config import (
+    get_llm_policy_allow_placeholders,
     get_llm_policy_path,
     get_llm_policy_profile,
     is_llm_policy_enabled,
@@ -53,9 +54,9 @@ def run_task_with_policy(
     enabled = is_llm_policy_enabled() if policy_enabled is None else policy_enabled
     if not enabled:
         return TaskRunResult(
-            status="error",
+            status="skipped",
             data=None,
-            error_type="llm_policy_disabled",
+            error_type="policy_disabled",
             attempts=0,
             profile=profile or get_llm_policy_profile(),
             escalated=False,
@@ -64,6 +65,7 @@ def run_task_with_policy(
     policy = policy or LlmPolicyLoader.load(
         enabled=True,
         path_override=get_llm_policy_path(),
+        allow_placeholders=get_llm_policy_allow_placeholders(),
     )
     if policy is None:
         return TaskRunResult(

@@ -13,3 +13,7 @@ def get_llm_policy_path() -> str | None:
 
 def get_llm_policy_profile() -> str:
     return os.getenv("LLM_POLICY_PROFILE", "cheap")
+
+
+def get_llm_policy_allow_placeholders() -> bool:
+    return os.getenv("LLM_POLICY_ALLOW_PLACEHOLDERS", "false").lower() in {"1", "true", "yes"}

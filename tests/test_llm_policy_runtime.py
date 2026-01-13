@@ -36,7 +36,7 @@ class StubCaller:
 
 
 def test_resolve_call_spec() -> None:
-    policy = LlmPolicyLoader.load(enabled=True)
+    policy = LlmPolicyLoader.load(enabled=True, allow_placeholders=True)
     assert policy is not None
 
     spec = resolve_call_spec(policy, "shopping_extraction", "cheap")
@@ -47,7 +47,7 @@ def test_resolve_call_spec() -> None:
 
 def test_escalation_sequence_invalid_json_then_reliable_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
-    policy = LlmPolicyLoader.load(enabled=True)
+    policy = LlmPolicyLoader.load(enabled=True, allow_placeholders=True)
     assert policy is not None
 
     responses = [
@@ -74,7 +74,7 @@ def test_escalation_sequence_invalid_json_then_reliable_ok(monkeypatch: pytest.M
 
 def test_timeout_returns_error_without_escalation(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
-    policy = LlmPolicyLoader.load(enabled=True)
+    policy = LlmPolicyLoader.load(enabled=True, allow_placeholders=True)
     assert policy is not None
 
     caller = StubCaller([TimeoutError("timeout")])
@@ -96,7 +96,7 @@ def test_timeout_returns_error_without_escalation(monkeypatch: pytest.MonkeyPatc
 
 def test_unavailable_returns_error_without_escalation(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
-    policy = LlmPolicyLoader.load(enabled=True)
+    policy = LlmPolicyLoader.load(enabled=True, allow_placeholders=True)
     assert policy is not None
 
     caller = StubCaller([LlmUnavailableError("down")])

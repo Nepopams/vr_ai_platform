@@ -26,7 +26,7 @@ class RouterV2Pipeline(RouterStrategy):
         text = command.get("text", "").strip()
         intent = detect_intent(text) if text else "clarify_needed"
         item_name = (
-            extract_shopping_item_name(text, trace_id=command.get("command_id")).item_name
+            extract_shopping_item_name(text, trace_id=command.get("trace_id")).item_name
             if intent == "add_shopping_item"
             else None
         )

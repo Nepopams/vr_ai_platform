@@ -47,6 +47,13 @@ def extract_shopping_item_name(
         trace_id=trace_id,
         policy_enabled=enabled,
     )
+    if result.status == "skipped" and result.error_type == "policy_disabled":
+        return ExtractionResult(
+            item_name=fallback_extract_item_name(text),
+            used_policy=False,
+            error_type=None,
+        )
+
     if result.status == "ok" and result.data is not None:
         item_name = result.data.get("item_name")
         if isinstance(item_name, str):

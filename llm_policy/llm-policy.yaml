@@ -45,3 +45,4 @@ fallback_chain:
     action: "return_error"
   - event: "llm_error"
     action: "return_error"
+# В MVP fallback_chain является декларативной схемой; фактическая эскалация фиксирована.
