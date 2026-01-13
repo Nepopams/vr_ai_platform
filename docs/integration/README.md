@@ -281,6 +281,43 @@ Shadow Router также учитывает `LLM_POLICY_ENABLED`. Если по�
 
 Примечание: в MVP `fallback_chain` является декларативной схемой для будущего расширения; фактическая эскалация реализована фиксированным алгоритмом cheap → repair → reliable.
 
+## LLM Assist Mode (Normalizer++ / Entities / Clarify)
+
+Assist Mode помогает улучшать нормализацию и извлечение сущностей, но **не влияет** на выбор `action`.
+Финальное решение остаётся за детерминированным RouterV2.
+
+### Флаги
+
+- `ASSIST_MODE_ENABLED=false` — общий выключатель.
+- `ASSIST_NORMALIZATION_ENABLED=false` — LLM Normalizer++.
+- `ASSIST_ENTITY_EXTRACTION_ENABLED=false` — LLM Entity Assist.
+- `ASSIST_CLARIFY_ENABLED=false` — LLM Clarify Suggestor.
+- `ASSIST_TIMEOUT_MS=200` — best-effort таймаут для каждого шага.
+- `ASSIST_LOG_PATH=logs/assist.jsonl` — JSONL лог assist-шага.
+
+### Принципы
+
+- LLM выдаёт **hints**, детерминированный слой решает, принимать ли их.
+- Любые ошибки/таймауты → silent fallback на deterministic-only поведение.
+- В логах **нет** raw user text и raw LLM output.
+
+### Формат assist-логов (assist.jsonl)
+
+- `step`: `normalizer|entities|clarify`
+- `status`: `ok|skipped|error`
+- `accepted`: принят ли hint детерминированным слоем
+- `latency_ms`, `error_type`
+- `entities_summary`, `missing_fields_count`, `clarify_used`
+- `assist_version`
+
+### Метрики assist-качества
+
+- снижение числа `clarify` итераций;
+- рост доли `start_job`;
+- улучшение entity coverage (доля заполненных сущностей);
+- latency p50/p95 по шагам assist;
+- error_classes по `error_type`.
+
 ## Связанные документы
 
 - Контекст: `docs/integration/context_v1.md`
