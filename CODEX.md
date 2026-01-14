@@ -41,6 +41,12 @@ See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
 - ADR-002: Agent model & execution boundaries (MVP)
 - ADR-003: LLM model policy registry & escalation
 
+# Agent Contract (ADR-005)
+
+- Любая реализация/добавление агента или оркестрации должна соответствовать ADR-005.
+- Запрещены ad-hoc форматы входов/выходов агентов — использовать Agent Contract v0.
+- Если нужна новая возможность: сначала обновить ADR/контракт, затем код.
+
 # MVP v1 Compliance
 
 Все изменения в `contracts/`, `graphs/`, `agents/`, `skills/` должны соответствовать MVP v1.

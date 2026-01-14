@@ -1,0 +1,23 @@
+registry_version: "v0"
+compat:
+  adr: "ADR-005"
+  note: "internal-only"
+agents:
+  - agent_id: "baseline-shopping-extractor"
+    enabled: false
+    mode: "assist"
+    capabilities:
+      - capability_id: "extract_entities.shopping"
+        allowed_intents: ["add_shopping_item"]
+    runner:
+      kind: "python_module"
+      ref: "agents.baseline_shopping:run"
+  - agent_id: "baseline-clarify-suggestor"
+    enabled: false
+    mode: "assist"
+    capabilities:
+      - capability_id: "suggest_clarify"
+        allowed_intents: ["create_task", "add_shopping_item", "clarify_needed"]
+    runner:
+      kind: "python_module"
+      ref: "agents.baseline_clarify:run"

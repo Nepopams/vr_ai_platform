@@ -193,6 +193,46 @@ AI Platform **не выполняет** эти действия сама — о�
   - `LLM_POLICY_ALLOW_PLACEHOLDERS=true` (только для шаблонных файлов, по умолчанию запрещено)
   - Для использования политики вызывайте high-level API (например, `llm_policy.tasks`), а не `runtime.py` напрямую.
 
+## Agent Platform v0 (internal-only)
+
+Internal-only контур агентной платформы по ADR-005. Он **не** подключён к runtime/RouterV2 и
+не влияет на публичные контракты. Источник истины: `docs/adr/ADR-005-internal-agent-contract-v0.md`.
+
+Компоненты:
+
+- Registry v0: `agent_registry/agent-registry-v0.yaml` + loader `agent_registry/v0_loader.py`.
+- Capability catalog v0: `agent_registry/capabilities-v0.yaml` (purpose/modes/risk/payload_allowlist).
+- Validation toolkit: `agent_registry/validation.py` и `agent_registry/v0_reason_codes.py`.
+- AgentRunner v0: `agent_registry/v0_runner.py` (`python_module`, `llm_policy_task`).
+- Agent run logs (opt-in): `app/logging/agent_run_log.py`.
+
+Валидация registry вручную:
+
+```bash
+python3 -c "from agent_registry.v0_loader import AgentRegistryV0Loader; AgentRegistryV0Loader.load()"
+```
+
+Agent run logs (agent_run.jsonl) включаются флагами:
+
+- `AGENT_RUN_LOG_ENABLED=false`
+- `AGENT_RUN_LOG_PATH=logs/agent_run.jsonl`
+
+Правила приватности логов: никакого raw user text/LLM output; в `payload_summary` — только ключи,
+счётчики и флаги (строковых значений нет, кроме имён ключей).
+
+Baseline agents v0 (internal-only):
+
+- `baseline-shopping-extractor` → `extract_entities.shopping`
+- `baseline-clarify-suggestor` → `suggest_clarify`
+
+Ручной запуск:
+
+```bash
+python3 scripts/run_agent_v0.py baseline-shopping-extractor docs/integration/examples/add_shopping_item_start_job.json
+```
+
+Агенты **не подключены** к RouterV2 и не влияют на MVP.
+
 Пример минимального policy-файла (шаблон, реальные значения передаются через `LLM_POLICY_PATH`):
 
 ```yaml

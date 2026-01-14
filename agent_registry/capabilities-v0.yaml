@@ -1,0 +1,36 @@
+catalog_version: "v0"
+capabilities:
+  - capability_id: "normalize_text"
+    purpose: "Нормализация пользовательского текста"
+    allowed_modes: ["assist"]
+    risk_level: "low"
+    payload_allowlist: ["normalized_text", "language_hint", "confidence"]
+    contains_sensitive_text: true
+  - capability_id: "extract_entities.shopping"
+    purpose: "Извлечение сущностей покупок"
+    allowed_modes: ["assist", "shadow", "partial_trust"]
+    risk_level: "medium"
+    allowed_intents: ["add_shopping_item"]
+    payload_allowlist: ["items", "list_id", "confidence"]
+    contains_sensitive_text: true
+  - capability_id: "suggest_clarify"
+    purpose: "Предложение уточняющих вопросов"
+    allowed_modes: ["assist", "shadow"]
+    risk_level: "medium"
+    allowed_intents: ["create_task", "add_shopping_item", "clarify_needed"]
+    payload_allowlist: ["question", "missing_fields", "confidence"]
+    contains_sensitive_text: true
+  - capability_id: "propose_plan.executionless"
+    purpose: "План без выполнения"
+    allowed_modes: ["shadow"]
+    risk_level: "low"
+    allowed_intents: ["create_task", "add_shopping_item"]
+    payload_allowlist: ["steps", "confidence"]
+    contains_sensitive_text: true
+  - capability_id: "decision_candidate.shopping"
+    purpose: "LLM-кандидат решения для покупок"
+    allowed_modes: ["partial_trust"]
+    risk_level: "high"
+    allowed_intents: ["add_shopping_item"]
+    payload_allowlist: ["proposed_actions", "job_type", "confidence"]
+    contains_sensitive_text: true

@@ -128,6 +128,47 @@ Do not break contracts. Any change to contract definitions or their consumers mu
 - MVP v1 обязателен для всех изменений в платформе.
 - Спецификация: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
 
+## Agent Contract v0 (ADR-005) — обязательный стандарт
+
+Контракт нужен, чтобы избежать “snowflake” агентов и подготовить устойчивую оркестрацию.
+**Источник истины**: ADR-005 `docs/adr/ADR-005-internal-agent-contract-v0.md`.
+
+Ключевые правила:
+
+- Internal-only: контракт не является частью `contracts/` и не влияет на публичные API.
+- Режимы `shadow/assist/partial_trust` строго ограничены и не меняют DecisionDTO вне коридоров.
+- Обязательные validate/allowlist проверки для входов и выходов.
+- Приватность: по умолчанию **без raw user text и raw LLM output в логах**.
+- Reason codes стандартизированы и используются единообразно.
+
+Definition of Done для нового агента:
+
+- AgentSpec зарегистрирован в file-based registry.
+- Capabilities агента явно определены.
+- Runner определён (`python_module` или `llm_policy_task`).
+- Output проходит validation toolkit/allowlist.
+- Логирование только summaries/counters, без raw данных.
+
+## Agent Platform v0 (Phase 4 current state)
+
+Состав компонентов (internal-only, без подключения к RouterV2):
+
+- Реестр агентов v0: `agent_registry/agent-registry-v0.yaml` + loader `agent_registry/v0_loader.py`.
+- Каталог capabilities v0: `agent_registry/capabilities-v0.yaml`.
+- Validation toolkit: `agent_registry/validation.py` и `agent_registry/v0_reason_codes.py`.
+- AgentRunner v0: `agent_registry/v0_runner.py` (`python_module`, `llm_policy_task`).
+- Agent run logs: `app/logging/agent_run_log.py` (opt-in).
+- Baseline агенты: `agents/baseline_shopping.py`, `agents/baseline_clarify.py`.
+- Ручной запуск: `scripts/run_agent_v0.py`.
+
+Checklist для добавления агента v0:
+
+- Spec добавлен в registry v0, `enabled=false` по умолчанию.
+- Запуск/проверка только вручную через AgentRunner/`scripts/run_agent_v0.py`.
+- Ровно 1 capability, описана в catalog (payload_allowlist, contains_sensitive_text).
+- Runner.ref корректен и mode допустим для capability.
+- Output проходит validation toolkit; в логах только summaries/counters, без raw данных.
+
 ## Skills
 
 Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.
@@ -143,4 +184,3 @@ If you change `contracts/`, `graphs/`, `agents/`, or `api`, check whether C4/seq
 - `make run_graph_suite`
 - `make audit_decisions`
 - `make release_sanity`
-

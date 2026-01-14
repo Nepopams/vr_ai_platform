@@ -1,0 +1,8 @@
+REASON_DISABLED = "disabled"
+REASON_POLICY_DISABLED = "policy_disabled"
+REASON_TIMEOUT = "timeout"
+REASON_EXCEPTION = "exception"
+REASON_INVALID_INPUT = "invalid_input"
+REASON_INVALID_OUTPUT = "invalid_output"
+REASON_UNKNOWN_RUNNER = "unknown_runner_kind"
+REASON_CAPABILITY_NOT_ALLOWED = "capability_not_allowed"

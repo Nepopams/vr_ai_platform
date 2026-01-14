@@ -19,6 +19,12 @@ make run_graph
 - `docs/` – Detailed documentation, including contract definitions.
 - `tests/` – Unit tests for the graph and schema validation.
 
+## Agent Platform v0 (internal-only)
+
+Внутренний контур Agent Platform v0 описан в `docs/integration/README.md` и
+`docs/adr/ADR-005-internal-agent-contract-v0.md`. Он не подключён к runtime/RouterV2
+и не влияет на публичные контракты.
+
 ## Common Tasks
 
 ```bash
