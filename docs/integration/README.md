@@ -231,7 +231,34 @@ Baseline agents v0 (internal-only):
 python3 scripts/run_agent_v0.py baseline-shopping-extractor docs/integration/examples/add_shopping_item_start_job.json
 ```
 
-Агенты **не подключены** к RouterV2 и не влияют на MVP.
+По умолчанию агенты **не подключены** к RouterV2 и не влияют на MVP.
+
+### Shadow Agent Invoker (Phase 5.1)
+
+Registry-driven shadow-инвокация в RouterV2 работает в best-effort режиме и **никогда**
+не меняет DecisionDTO/ветвление ответа.
+
+Флаги:
+
+- `SHADOW_AGENT_INVOKER_ENABLED=false`
+- `SHADOW_AGENT_REGISTRY_PATH=agent_registry/agent-registry-v0.yaml`
+- `SHADOW_AGENT_ALLOWLIST=baseline-shopping-extractor,baseline-clarify-suggestor`
+- `SHADOW_AGENT_SAMPLE_RATE=0.0`
+- `SHADOW_AGENT_TIMEOUT_MS=150`
+
+Принцип работы:
+
+- запуск только для allowlist + sampled `command_id`;
+- `enabled=false` в registry остаётся безопасным дефолтом, фактическое включение происходит через allowlist;
+- ошибки глушатся, логи — только privacy-safe `agent_run.jsonl` (если включены).
+
+Diff-лог (observability, zero-impact):
+
+- `SHADOW_AGENT_DIFF_LOG_ENABLED=false`
+- `SHADOW_AGENT_DIFF_LOG_PATH=logs/shadow_agent_diff.jsonl`
+
+Формат diff-лога (JSONL) включает baseline summary (intent/action/job_type/counts),
+agent summary (keys/counts/flags) и агрегированный diff без raw данных.
 
 Пример минимального policy-файла (шаблон, реальные значения передаются через `LLM_POLICY_PATH`):
 
@@ -416,6 +443,36 @@ Assist Mode помогает улучшать нормализацию и изв
 - `ASSIST_TIMEOUT_MS=200` — best-effort таймаут для каждого шага.
 - `ASSIST_LOG_PATH=logs/assist.jsonl` — JSONL лог assist-шага.
 
+### Assist Agent Hints (Phase 5.3)
+
+Agent-hints используют Agent Platform v0 как дополнительный источник подсказок и **не меняют**
+выбор `action/job_type`. Включаются отдельно от LLM assist.
+
+Флаги:
+
+- `ASSIST_AGENT_HINTS_ENABLED=false`
+- `ASSIST_AGENT_HINTS_CAPABILITY=extract_entities.shopping`
+- `ASSIST_AGENT_HINTS_ALLOWLIST=` (CSV)
+- `ASSIST_AGENT_HINTS_SAMPLE_RATE=0.0`
+- `ASSIST_AGENT_HINTS_AGENT_ID=` (override, опционально)
+- `ASSIST_AGENT_HINTS_TIMEOUT_MS=120`
+
+Ограничения:
+
+- выбор агента идёт через registry v0: `mode=assist`, `capability_id` и `allowed_intents`;
+- запускаются только агенты с `enabled=true` в registry (без runtime-override);
+- базовый assist-агент для shopping: `baseline-shopping-extractor-assist` (пример);
+- agent-hints применяются только при `add_shopping_item` и только для отсутствующих сущностей;
+- deterministic-first guardrails: подсказка лишь дополняет, не переопределяет найденное;
+- allowlist/sampling управляют запуском, ошибки/таймауты глушатся;
+- в логах нет raw user text и строковых значений из agent payload.
+
+Правила выбора при нескольких кандидатах (scoring v0):
+
+- приоритет статусов: `ok` > `rejected` > `error` > `skipped`;
+- среди `ok`: применимый результат выше неприменимого;
+- tie-break: меньшая `latency_ms`, затем стабильный порядок по `agent_id`.
+
 ### Принципы
 
 - LLM выдаёт **hints**, детерминированный слой решает, принимать ли их.
@@ -429,6 +486,9 @@ Assist Mode помогает улучшать нормализацию и изв
 - `accepted`: принят ли hint детерминированным слоем
 - `latency_ms`, `error_type`
 - `entities_summary`, `missing_fields_count`, `clarify_used`
+- `agent_hint_status`, `agent_hint_latency_ms`, `agent_hint_items_count`, `agent_hint_applied`
+- `agent_hint_candidates_count`, `agent_hint_selected_agent_id`, `agent_hint_selected_status`
+- `agent_hint_selection_reason`
 - `assist_version`
 
 ### Метрики assist-качества
@@ -438,6 +498,64 @@ Assist Mode помогает улучшать нормализацию и изв
 - улучшение entity coverage (доля заполненных сущностей);
 - latency p50/p95 по шагам assist;
 - error_classes по `error_type`.
+
+## Offline metrics (Phase 5.3d)
+
+Скрипт читает JSONL логи оффлайн и считает метрики agent-hints/безопасности без вывода raw значений.
+Поддерживаются: `logs/assist.jsonl`, `logs/agent_run.jsonl`, `logs/shadow_agent_diff.jsonl`.
+
+Запуск:
+
+```bash
+python3 scripts/metrics_agent_hints_v0.py \\
+  --assist-log logs/assist.jsonl \\
+  --agent-run-log logs/agent_run.jsonl \\
+  --shadow-diff-log logs/shadow_agent_diff.jsonl \\
+  --output-dir reports/metrics
+```
+
+Self-test (без pytest):
+
+```bash
+python3 scripts/metrics_agent_hints_v0.py --self-test
+```
+
+Метрики:
+
+- coverage/usage (attempted/applied/rejected/skipped/error);
+- latency p50/p95 (agent_hint_latency_ms, agent_run latency_ms);
+- quality proxies (uplift_proxy, diff overlap counts);
+- selection (Phase 5.3): candidates_total, selection_rate/no_selection_rate, distributions по selection_reason/selected_agent_id;
+- privacy scan (string_values_detected, dangerous_fields_present, schema_drift, parse_errors).
+
+Privacy‑доктрина: скрипт **никогда** не печатает и не сохраняет строковые значения из payload.
+При обнаружении строк увеличивает только счётчик предупреждений.
+
+## Offline validation (Phase 5.3d)
+
+Валидатор проверяет registry v0 и capability catalog v0 оффлайн, без влияния на runtime.
+Выводит только агрегаты/счётчики, без списков ID и без raw значений.
+
+Запуск:
+
+```bash
+python3 scripts/validate_agent_platform_v0.py
+```
+
+Self-test (без pytest):
+
+```bash
+python3 scripts/validate_agent_platform_v0.py --self-test
+```
+
+Exit codes:
+
+- `0` — ok (ошибок/предупреждений нет).
+- `1` — warnings (например, включённые агенты — не safe-by-default).
+- `2` — errors (инварианты нарушены, например опасные ключи в allowlist).
+
+Privacy‑доктрина: валидатор не печатает raw значения и не выводит списки agent_id/capability_id;
+только счётчики по типам.
 
 ## Связанные документы
 

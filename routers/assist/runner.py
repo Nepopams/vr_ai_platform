@@ -4,31 +4,46 @@ from __future__ import annotations
 
 import re
 import time
+from dataclasses import replace
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Any, Dict, Iterable, List, Optional
 
 from app.logging.assist_log import append_assist_log
+from agent_registry.v0_loader import AgentRegistryV0Loader
+from agent_registry.v0_models import AgentRegistryV0, AgentSpec, TimeoutSpec
+from agent_registry.v0_runner import run as run_agent
 from graphs.core_graph import detect_intent, extract_item_name as fallback_extract_item_name
 from llm_policy.config import get_llm_policy_profile, is_llm_policy_enabled
 from llm_policy.runtime import run_task_with_policy
 from routers.assist.config import (
+    assist_agent_hints_agent_id,
+    assist_agent_hints_capability,
+    assist_agent_hints_allowlist,
+    assist_agent_hints_enabled,
+    assist_agent_hints_sample_rate,
+    assist_agent_hints_timeout_ms,
     assist_clarify_enabled,
     assist_entity_extraction_enabled,
     assist_mode_enabled,
     assist_normalization_enabled,
     assist_timeout_ms,
 )
+from routers.assist.agent_scoring import AgentHintCandidate, select_best_candidate
 from routers.assist.types import (
     AssistApplication,
     AssistHints,
+    AgentEntityHint,
     ClarifyHint,
     EntityHints,
     NormalizationHint,
 )
+from routers.partial_trust_sampling import stable_sample
 
 
 ASSIST_VERSION = "assist-0.1"
 _EXECUTOR = ThreadPoolExecutor(max_workers=3, thread_name_prefix="assist-mode")
+_AGENT_REGISTRY_CACHE: Optional[AgentRegistryV0] = None
+_AGENT_REGISTRY_ERROR: bool = False
 
 _NORMALIZATION_TASK_ID = "assist_normalization"
 _ENTITY_TASK_ID = "assist_entity_extraction"
@@ -75,7 +90,13 @@ def apply_assist_hints(command: Dict[str, Any], normalized: Dict[str, Any]) -> A
 
     hints = _build_assist_hints(command, normalized)
     updated, _ = _apply_normalization_hint(normalized, hints.normalization)
-    updated, _ = _apply_entity_hints(updated, hints.entities, original_text=normalized.get("text", ""))
+    agent_hint = _run_agent_entity_hint(command, updated)
+    updated, _ = _apply_entity_hints(
+        updated,
+        hints.entities,
+        original_text=updated.get("text", ""),
+        agent_hint=agent_hint,
+    )
     clarify_question, clarify_missing_fields = _select_clarify_hint(
         hints.clarify, updated, command.get("text", "")
     )
@@ -162,6 +183,104 @@ def _run_entity_hint(text: str) -> EntityHints:
     )
 
 
+def _run_agent_entity_hint(command: Dict[str, Any], normalized: Dict[str, Any]) -> AgentEntityHint:
+    if not assist_agent_hints_enabled():
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+    if normalized.get("intent") != "add_shopping_item":
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+    if normalized.get("item_name"):
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+
+    sample_rate = assist_agent_hints_sample_rate()
+    if sample_rate <= 0.0:
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+    if not stable_sample(command.get("command_id"), sample_rate):
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+
+    capability_id = assist_agent_hints_capability()
+    if not capability_id:
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None)
+
+    allowlist = assist_agent_hints_allowlist()
+    override_agent_id = assist_agent_hints_agent_id() or None
+    candidates = _load_agent_candidates(capability_id, normalized.get("intent"), allowlist, override_agent_id)
+    candidates_count = len(candidates)
+    if not candidates:
+        return AgentEntityHint(status="skipped", items=[], latency_ms=None, candidates_count=candidates_count)
+
+    agent_input = {
+        "text": normalized.get("text", ""),
+        "context": command.get("context", {}),
+        "command_id": command.get("command_id"),
+    }
+    text = normalized.get("text", "")
+    scored_candidates: List[AgentHintCandidate] = []
+    for candidate in candidates:
+        spec = _apply_agent_timeout(candidate)
+        try:
+            output = run_agent(spec, agent_input, trace_id=command.get("trace_id"))
+        except Exception:
+            scored_candidates.append(
+                AgentHintCandidate(
+                    agent_id=candidate.agent_id,
+                    status="error",
+                    applicable=False,
+                    latency_ms=None,
+                    payload=None,
+                    items=[],
+                )
+            )
+            continue
+        payload = output.payload if isinstance(output.payload, dict) else None
+        items_payload = payload.get("items") if isinstance(payload, dict) else None
+        items = [item for item in items_payload if isinstance(item, str)] if isinstance(items_payload, list) else []
+        applicable = bool(_pick_matching_item(items, text)) if output.status == "ok" else False
+        scored_candidates.append(
+            AgentHintCandidate(
+                agent_id=candidate.agent_id,
+                status=output.status,
+                applicable=applicable,
+                latency_ms=output.latency_ms,
+                payload=payload,
+                items=items,
+            )
+        )
+
+    selected, selection_reason = select_best_candidate(scored_candidates)
+    if selected is None:
+        return AgentEntityHint(
+            status="skipped",
+            items=[],
+            latency_ms=None,
+            candidates_count=candidates_count,
+            selected_agent_id=None,
+            selected_status=None,
+            selection_reason=None,
+        )
+
+    if selected.status != "ok" or not isinstance(selected.payload, dict):
+        return AgentEntityHint(
+            status=selected.status,
+            items=[],
+            latency_ms=selected.latency_ms,
+            candidates_count=candidates_count,
+            selected_agent_id=selected.agent_id,
+            selected_status=selected.status,
+            selection_reason=selection_reason,
+        )
+
+    filtered = list(selected.items)
+    return AgentEntityHint(
+        status="ok",
+        items=filtered,
+        latency_ms=selected.latency_ms,
+        candidates_count=candidates_count,
+        selected_agent_id=selected.agent_id,
+        selected_status=selected.status,
+        selection_reason=selection_reason,
+    )
+
+
 def _run_clarify_hint(text: str, intent: Optional[str]) -> ClarifyHint:
     result = _run_llm_task(
         task_id=_CLARIFY_TASK_ID,
@@ -187,6 +306,69 @@ def _run_clarify_hint(text: str, intent: Optional[str]) -> ClarifyHint:
         error_type=None,
         latency_ms=result.get("latency_ms"),
     )
+
+
+def _load_agent_registry() -> AgentRegistryV0 | None:
+    global _AGENT_REGISTRY_CACHE, _AGENT_REGISTRY_ERROR
+    if _AGENT_REGISTRY_CACHE is not None:
+        return _AGENT_REGISTRY_CACHE
+    if _AGENT_REGISTRY_ERROR:
+        return None
+    try:
+        registry = AgentRegistryV0Loader.load()
+    except Exception:
+        _AGENT_REGISTRY_ERROR = True
+        return None
+    _AGENT_REGISTRY_CACHE = registry
+    return registry
+
+
+def _load_agent_candidates(
+    capability_id: str,
+    intent: Optional[str],
+    allowlist: List[str],
+    override_agent_id: Optional[str],
+) -> List[AgentSpec]:
+    registry = _load_agent_registry()
+    if registry is None:
+        return []
+    allowed_ids = set(allowlist) if allowlist else set()
+    candidates: List[AgentSpec] = []
+    for agent in registry.agents:
+        if override_agent_id and agent.agent_id != override_agent_id:
+            continue
+        if allowed_ids and agent.agent_id not in allowed_ids:
+            continue
+        if not agent.enabled:
+            continue
+        if agent.mode != "assist":
+            continue
+        if len(agent.capabilities) != 1:
+            continue
+        capability = agent.capabilities[0]
+        if capability.capability_id != capability_id:
+            continue
+        if not _agent_intent_allowed(capability.allowed_intents, intent):
+            continue
+        candidates.append(agent)
+    return candidates
+
+
+def _apply_agent_timeout(agent: AgentSpec) -> AgentSpec:
+    timeout_ms = assist_agent_hints_timeout_ms()
+    if timeout_ms <= 0:
+        return agent
+    timeouts = TimeoutSpec(timeout_ms=timeout_ms)
+    return replace(agent, timeouts=timeouts)
+
+
+def _agent_intent_allowed(allowed_intents: Iterable[str], intent: Optional[str]) -> bool:
+    if not intent:
+        return False
+    allowed = list(allowed_intents)
+    if allowed and intent not in allowed:
+        return False
+    return True
 
 
 def _apply_normalization_hint(
@@ -225,23 +407,77 @@ def _apply_entity_hints(
     hint: Optional[EntityHints],
     *,
     original_text: str,
+    agent_hint: Optional[AgentEntityHint] = None,
 ) -> tuple[Dict[str, Any], bool]:
-    if hint is None:
-        _log_step("entities", "skipped", None, accepted=False, error_type="no_hint", latency_ms=None)
-        return dict(normalized), False
-
-    if hint.error_type:
-        _log_step("entities", "error", hint, accepted=False, error_type=hint.error_type, latency_ms=hint.latency_ms)
-        return dict(normalized), False
-
     updated = dict(normalized)
     accepted = False
-    if normalized.get("intent") == "add_shopping_item" and not normalized.get("item_name"):
-        item = _pick_matching_item(hint.items, original_text)
-        if item:
-            updated["item_name"] = item
-            accepted = True
-    _log_step("entities", "ok", hint, accepted=accepted, error_type=None, latency_ms=hint.latency_ms)
+
+    agent_status = "skipped"
+    agent_latency_ms = None
+    agent_items_count = 0
+    agent_applied = False
+    agent_candidates_count = 0
+    agent_selected_id = None
+    agent_selected_status = None
+    agent_selection_reason = None
+    if agent_hint is not None:
+        agent_status = agent_hint.status
+        agent_latency_ms = agent_hint.latency_ms
+        agent_items_count = len(agent_hint.items)
+        agent_candidates_count = agent_hint.candidates_count
+        agent_selected_id = agent_hint.selected_agent_id
+        agent_selected_status = agent_hint.selected_status
+        agent_selection_reason = agent_hint.selection_reason
+        if (
+            agent_hint.status == "ok"
+            and normalized.get("intent") == "add_shopping_item"
+            and not updated.get("item_name")
+        ):
+            item = _pick_matching_item(agent_hint.items, original_text)
+            if item:
+                updated["item_name"] = item
+                agent_applied = True
+                accepted = True
+
+    llm_status = "skipped"
+    llm_error_type: Optional[str] = "no_hint"
+    llm_latency_ms = None
+    if hint is not None:
+        llm_latency_ms = hint.latency_ms
+        if hint.error_type:
+            llm_status = "error"
+            llm_error_type = hint.error_type
+        else:
+            llm_status = "ok"
+            llm_error_type = None
+            if normalized.get("intent") == "add_shopping_item" and not updated.get("item_name"):
+                item = _pick_matching_item(hint.items, original_text)
+                if item:
+                    updated["item_name"] = item
+                    accepted = True
+
+    status = llm_status
+    error_type = llm_error_type
+    if agent_applied and llm_status in {"skipped", "error"}:
+        status = "ok"
+        error_type = None
+
+    _log_step(
+        "entities",
+        status,
+        hint,
+        accepted=accepted,
+        error_type=error_type,
+        latency_ms=llm_latency_ms,
+        agent_hint_status=agent_status,
+        agent_hint_latency_ms=agent_latency_ms,
+        agent_hint_items_count=agent_items_count,
+        agent_hint_applied=agent_applied,
+        agent_hint_candidates_count=agent_candidates_count,
+        agent_hint_selected_agent_id=agent_selected_id,
+        agent_hint_selected_status=agent_selected_status,
+        agent_hint_selection_reason=agent_selection_reason,
+    )
     return updated, accepted
 
 
@@ -384,6 +620,14 @@ def _log_step(
     accepted: bool,
     error_type: Optional[str],
     latency_ms: Optional[int] = None,
+    agent_hint_status: Optional[str] = None,
+    agent_hint_latency_ms: Optional[int] = None,
+    agent_hint_items_count: Optional[int] = None,
+    agent_hint_applied: Optional[bool] = None,
+    agent_hint_candidates_count: Optional[int] = None,
+    agent_hint_selected_agent_id: Optional[str] = None,
+    agent_hint_selected_status: Optional[str] = None,
+    agent_hint_selection_reason: Optional[str] = None,
 ) -> None:
     entities_summary = None
     missing_fields_count = None
@@ -394,17 +638,31 @@ def _log_step(
             entities_summary = _summarize_entities(payload.items)
     if step == "clarify" and hasattr(payload, "missing_fields") and payload.missing_fields:
         missing_fields_count = len(payload.missing_fields)
-    append_assist_log(
-        {
-            "step": step,
-            "status": status,
-            "accepted": accepted,
-            "error_type": error_type,
-            "latency_ms": latency_ms,
-            "entities_summary": entities_summary,
-            "missing_fields_count": missing_fields_count,
-            "clarify_used": accepted if step == "clarify" else None,
-            "assist_version": ASSIST_VERSION,
-        }
-    )
-
+    record = {
+        "step": step,
+        "status": status,
+        "accepted": accepted,
+        "error_type": error_type,
+        "latency_ms": latency_ms,
+        "entities_summary": entities_summary,
+        "missing_fields_count": missing_fields_count,
+        "clarify_used": accepted if step == "clarify" else None,
+        "assist_version": ASSIST_VERSION,
+    }
+    if agent_hint_status is not None:
+        record["agent_hint_status"] = agent_hint_status
+    if agent_hint_latency_ms is not None:
+        record["agent_hint_latency_ms"] = agent_hint_latency_ms
+    if agent_hint_items_count is not None:
+        record["agent_hint_items_count"] = agent_hint_items_count
+    if agent_hint_applied is not None:
+        record["agent_hint_applied"] = agent_hint_applied
+    if agent_hint_candidates_count is not None:
+        record["agent_hint_candidates_count"] = agent_hint_candidates_count
+    if agent_hint_selected_agent_id is not None:
+        record["agent_hint_selected_agent_id"] = agent_hint_selected_agent_id
+    if agent_hint_selected_status is not None:
+        record["agent_hint_selected_status"] = agent_hint_selected_status
+    if agent_hint_selection_reason is not None:
+        record["agent_hint_selection_reason"] = agent_hint_selection_reason
+    append_assist_log(record)

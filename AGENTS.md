@@ -169,6 +169,11 @@ Checklist для добавления агента v0:
 - Runner.ref корректен и mode допустим для capability.
 - Output проходит validation toolkit; в логах только summaries/counters, без raw данных.
 
+Assist agent-hints (Phase 5.2):
+
+- Подключаются только флагами и не меняют выбор `action/job_type`.
+- Используются как подсказки для отсутствующих сущностей, deterministic-first guardrails обязательны.
+
 ## Skills
 
 Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.

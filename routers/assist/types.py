@@ -26,6 +26,17 @@ class EntityHints:
 
 
 @dataclass(frozen=True)
+class AgentEntityHint:
+    status: str
+    items: List[str]
+    latency_ms: Optional[int]
+    candidates_count: int = 0
+    selected_agent_id: Optional[str] = None
+    selected_status: Optional[str] = None
+    selection_reason: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class ClarifyHint:
     question: Optional[str]
     missing_fields: Optional[List[str]]

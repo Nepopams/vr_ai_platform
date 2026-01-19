@@ -31,6 +31,7 @@ from routers.partial_trust_config import (
 )
 from routers.partial_trust_sampling import stable_sample
 from routers.shadow_router import start_shadow_router
+from routers.agent_invoker_shadow import invoke_shadow_agents
 
 
 class RouterV2Pipeline(RouterStrategy):
@@ -40,6 +41,13 @@ class RouterV2Pipeline(RouterStrategy):
         assist = apply_assist_hints(command, normalized)
         plan = self.plan(assist.normalized, command)
         baseline = self.validate_and_build(plan, assist.normalized, command, assist)
+        invoke_shadow_agents(
+            command,
+            assist.normalized,
+            baseline,
+            baseline.get("trace_id"),
+            command.get("command_id"),
+        )
         partial_decision = self._maybe_apply_partial_trust(
             command=command,
             normalized=assist.normalized,
