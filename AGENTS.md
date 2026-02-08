@@ -1,198 +1,118 @@
 # Environment
 
 - Python binary: **`python3`** (NOT `python`). The system does not have a `python` symlink.
-- Virtual environment: `.venv/` (activate with `source .venv/bin/activate` or call `.venv/bin/python3` directly).
+- Virtual environment: `.venv/` (use `.venv/bin/python3` or `source .venv/bin/activate`).
 - Test runner: `.venv/bin/pytest` or `python3 -m pytest`.
 - All verification commands must use `python3`, not `python`.
 
-# Core Principles
-
-1. **Stateless operation**: The system must not persist data between runs. Every decision is derived strictly from the provided command payload.
-2. **Contract adherence**: All inputs and outputs must conform to the JSON schemas in `contracts/schemas/`.
-3. **Reasoning logging**: Every decision must include a structured reasoning trace that records command ID, steps, and version metadata.
-4. **Versioning from day one**: Decisions and reasoning logs must carry a version identifier (model and prompt versions).
-5. **Deterministic mock mode**: The initial pipeline simulates reasoning without any external LLM calls.
-
 # Base Rule
 
-You are a coding assistant.
+All explanations, summaries, reasoning, and descriptions of changes MUST be in Russian.
+Code itself stays in its original language.
 
-IMPORTANT:
-- All explanations, summaries, reasoning, and descriptions of changes
-  MUST ALWAYS be written in Russian.
-- This rule applies even if:
-  - user prompts are in English
-  - code comments are in English
-  - tool or skill prompts are in English
-- Code itself must stay in the original language.
-- Do not mention this rule in your responses.
+# Project Overview
 
-# Offline-friendly проверки
+HomeTask AI Platform routes user commands through a graph pipeline (`graphs/core_graph.py`)
+to produce structured decisions (DecisionDTO). LLM enhances but never replaces deterministic rules.
 
-- `make release-sanity` пропускает `api-sanity`, если `fastapi` недоступен.
-- Полный прогон API-санити: `RUN_API_SANITY=1 make release-sanity` или `make release-sanity-full`.
+# Sources of Truth
 
-# ADR Compliance
+| Artifact | Canonical path |
+|----------|---------------|
+| Product goal | `docs/planning/strategy/product-goal.md` |
+| Roadmap | `docs/planning/strategy/roadmap.md` |
+| MVP scope | `docs/planning/releases/MVP.md` |
+| Definition of Ready | `docs/_governance/dor.md` |
+| Definition of Done | `docs/_governance/dod.md` |
+| ADR archive | `docs/adr/` |
+| ADR index | `docs/_indexes/adr-index.md` |
+| Contract schemas | `contracts/schemas/` (JSON Schema) |
+| Contract version | `contracts/VERSION` (semver) |
+| Diagrams index | `docs/_indexes/diagrams-index.md` |
+| Epics & stories | `docs/planning/epics/<EPIC_ID>/` |
+| Workpacks | `docs/planning/workpacks/<STORY_ID>/` |
 
-For any changes to `contracts/`, `graphs/`, `agents/`, or `codex/`, development must follow ADR-000, ADR-001, and ADR-002.
+# Development Rules
 
-- All contract changes must obey semver and backward compatibility rules described in ADR-001.
-- If a solution conflicts with an ADR, stop and capture the decision in a new ADR (Draft) instead of pushing code changes.
-- `agent_registry/agent-registry.yaml` — derived artifact from ADR-002; любые новые intents/agents требуют нового ADR и semver-бампа.
-- Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
+## Contract & ADR compliance (single source)
 
-See `docs/adr/` for the ADR archive. The following ADRs are mandatory:
-
-- ADR-000: AI Platform — Contract-first Intent → Decision Engine (LangGraph)
-- ADR-001: Contract versioning & compatibility policy (CommandDTO/DecisionDTO)
-- ADR-002: Agent model & execution boundaries (MVP)
-- ADR-003: LLM model policy registry & escalation
-
-# MVP v1 Compliance
-
-Все изменения в `contracts/`, `graphs/`, `agents/`, `skills/` должны соответствовать MVP v1.
-
-- Нельзя добавлять новые intents/actions/поля без:
-  - обновления документа MVP (через документ \"MVP v2\"),
-  - соблюдения ADR-001 (semver),
-  - обновления fixtures/tests.
-- Если изменение спорное или затрагивает объём MVP — остановитесь и оформите ADR (Draft), а не делайте \"тихое\" изменение.
-
-См. спецификацию: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
-
-# Architecture & MVP Compliance
-
-- ADR-000, ADR-001 и ADR-002 обязательны для всех изменений платформы.
-- MVP v1 обязателен для всех изменений в `contracts/`, `graphs/`, `agents/`, `skills/`.
-- Диаграммы в `docs/diagrams/` — обязательные артефакты: код и диаграммы должны быть синхронизированы.
-- Любое изменение вне MVP v1 допускается только через новый документ MVP (v2) и,
-  при необходимости, новый ADR и semver-бамп.
-
-Ссылки: `docs/adr/`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.
-
-# Architecture Artifacts (C4 + Sequence)
-
-Диаграммы архитектуры (C4 и sequence) — обязательные артефакты платформы. При изменениях:
-
-- границ ответственности,
-- контейнеров/компонентов (Decision API, Orchestrator, Agents, Logs),
-- контрактов (CommandDTO/DecisionDTO),
-- жизненного цикла (start_job/clarify/async),
-
-необходимо обновлять диаграммы и/или оформлять новый ADR.
-
-Ссылки: `docs/adr/ADR-000-ai-platform-intent-decision-engine.md`, `docs/adr/ADR-001-contract-versioning-compatibility-policy.md`, `docs/adr/ADR-002-agent-model-execution-boundaries-mvp.md`, `docs/mvp/AI_PLATFORM_MVP_v1.md`, `docs/diagrams/README.md`.
-
-
-# Agent Architecture
-
-The HomeTask AI platform is designed to be modular. Agents are lightweight components that can be orchestrated by the core graph.
-
-## Project Summary
-
-HomeTask is an AI platform that routes user commands through a graph of specialized agents to produce structured decisions.
-
-## Do Not Break Contracts
-
-Do not break contracts. Any change to contract definitions or their consumers must preserve backward compatibility unless a coordinated, versioned change is explicitly planned and validated.
-
-## How Agents Are Invoked
-
-- Agents are instantiated within the graph pipeline (`graphs/core_graph.py`).
-- Each agent accepts a command payload and returns a structured contribution to the decision.
-- The pipeline merges agent outputs into a final decision object.
-
-## Extending the Pipeline
-
-1. Create a new agent module in `agents/`.
-2. Define a callable that accepts the command payload and returns a structured result.
-3. Wire the agent into the core graph pipeline and add tests.
-
-## Versioning
-
-- Agents should include a `version` identifier.
-- The pipeline should record agent versions in the reasoning log whenever an agent is invoked.
-
-## ADR-first development
-
-- Follow ADR-000, ADR-001, and ADR-002 for all platform evolution decisions.
-- Ensure safe handling for unknown `action` values and payload fields.
-- `contracts/VERSION` is the source of truth for contract schema versions.
-- `agent_registry/agent-registry.yaml` — derived from ADR-002; новые intents/agents требуют нового ADR и semver-бампа.
-- Включение реестра: `AGENT_REGISTRY_ENABLED=true`, опционально `AGENT_REGISTRY_PATH=/path/to/agent-registry.yaml`.
+- All inputs/outputs conform to `contracts/schemas/`.
+- Contract changes must follow semver (ADR-001). Never remove/rename fields without versioned migration.
+- New intents/agents/actions require ADR + semver bump.
+- If a change conflicts with an ADR, stop and create a new ADR (Draft) instead of pushing code.
 - Model policy / LLM selection must follow ADR-003.
-- Запрещено хардкодить модели в агентах без политики/ADR.
+- Safe handling of unknown `action` values and payload fields is mandatory (ADR-001).
 
-## ADR-first, MVP-first, keep diagrams in sync
+Mandatory ADRs:
+- ADR-000: Contract-first Intent -> Decision Engine
+- ADR-001: Contract versioning & compatibility
+- ADR-002: Agent model & execution boundaries
+- ADR-003: LLM model policy registry & escalation
+- ADR-005: Internal Agent Contract v0
 
-- Любые изменения должны соответствовать ADR-000/ADR-001/ADR-002 и MVP v1.
-- Диаграммы в `docs/diagrams/` — обязательные артефакты, поддерживайте синхронизацию с кодом.
-- Safe handling unknown action/payload — обязательное правило совместимости (ADR-001).
-- См. `docs/mvp/AI_PLATFORM_MVP_v1.md` и `docs/diagrams/README.md`.
+## MVP compliance
 
-## ADR-first + MVP-first development
+Changes to `contracts/`, `graphs/`, `agents/`, `skills/` must conform to MVP scope.
+New intents/actions/fields require: MVP scope update + ADR-001 semver + fixture/test updates.
 
-- MVP v1 обязателен для всех изменений в платформе.
-- Спецификация: `docs/mvp/AI_PLATFORM_MVP_v1.md`.
+## Privacy
 
-## Agent Contract v0 (ADR-005) — обязательный стандарт
+No raw user text or raw LLM output in logs or reports.
+Logging uses summaries/counters only. Sensitive fields: `text`, `question`, `item_name`,
+`ui_message`, `raw`, `output`, `prompt`, `normalized_text`.
 
-Контракт нужен, чтобы избежать “snowflake” агентов и подготовить устойчивую оркестрацию.
-**Источник истины**: ADR-005 `docs/adr/ADR-005-internal-agent-contract-v0.md`.
+## Diagrams
 
-Ключевые правила:
+If you change `contracts/`, `graphs/`, `agents/`, or `api/`, check whether diagrams
+need updates (`docs/_indexes/diagrams-index.md`). Explain in commit if skipped.
 
-- Internal-only: контракт не является частью `contracts/` и не влияет на публичные API.
-- Режимы `shadow/assist/partial_trust` строго ограничены и не меняют DecisionDTO вне коридоров.
-- Обязательные validate/allowlist проверки для входов и выходов.
-- Приватность: по умолчанию **без raw user text и raw LLM output в логах**.
-- Reason codes стандартизированы и используются единообразно.
+# Agent Platform v0
 
-Definition of Done для нового агента:
+## Architecture
 
-- AgentSpec зарегистрирован в file-based registry.
-- Capabilities агента явно определены.
-- Runner определён (`python_module` или `llm_policy_task`).
-- Output проходит validation toolkit/allowlist.
-- Логирование только summaries/counters, без raw данных.
+- Agents are orchestrated by `graphs/core_graph.py`.
+- Each agent accepts a command payload, returns a structured contribution to the decision.
+- Agent Contract v0 (ADR-005): standardized inputs/outputs, no "snowflake" agents.
 
-## Agent Platform v0 (Phase 4 current state)
+## Components
 
-Состав компонентов (internal-only, без подключения к RouterV2):
+| Component | Path |
+|-----------|------|
+| Registry v0 | `agent_registry/agent-registry-v0.yaml` |
+| Loader | `agent_registry/v0_loader.py` |
+| Runner | `agent_registry/v0_runner.py` (modes: `python_module`, `llm_policy_task`) |
+| Capabilities catalog | `agent_registry/capabilities-v0.yaml` |
+| Validation toolkit | `agent_registry/validation.py`, `agent_registry/v0_reason_codes.py` |
+| Baseline agents | `agents/baseline_shopping.py`, `agents/baseline_clarify.py` |
+| Run logs | `app/logging/agent_run_log.py` (opt-in) |
+| Manual runner | `scripts/run_agent_v0.py` |
+| Config | `AGENT_REGISTRY_ENABLED=true`, `AGENT_REGISTRY_PATH=<path>` |
 
-- Реестр агентов v0: `agent_registry/agent-registry-v0.yaml` + loader `agent_registry/v0_loader.py`.
-- Каталог capabilities v0: `agent_registry/capabilities-v0.yaml`.
-- Validation toolkit: `agent_registry/validation.py` и `agent_registry/v0_reason_codes.py`.
-- AgentRunner v0: `agent_registry/v0_runner.py` (`python_module`, `llm_policy_task`).
-- Agent run logs: `app/logging/agent_run_log.py` (opt-in).
-- Baseline агенты: `agents/baseline_shopping.py`, `agents/baseline_clarify.py`.
-- Ручной запуск: `scripts/run_agent_v0.py`.
+## Adding a new agent v0
 
-Checklist для добавления агента v0:
+1. Add AgentSpec to registry, `enabled: false` by default.
+2. Define exactly 1 capability in the catalog (`payload_allowlist`, `contains_sensitive_text`).
+3. Set `runner.ref` (valid module/task), ensure `mode` is allowed for the capability.
+4. Output must pass validation toolkit. Logs: summaries/counters only, no raw data.
+5. Test via `scripts/run_agent_v0.py` before enabling.
 
-- Spec добавлен в registry v0, `enabled=false` по умолчанию.
-- Запуск/проверка только вручную через AgentRunner/`scripts/run_agent_v0.py`.
-- Ровно 1 capability, описана в catalog (payload_allowlist, contains_sensitive_text).
-- Runner.ref корректен и mode допустим для capability.
-- Output проходит validation toolkit; в логах только summaries/counters, без raw данных.
+## Assist agent-hints
 
-Assist agent-hints (Phase 5.2):
+- Enabled by feature flags only; do not change `action/job_type` selection.
+- Used as hints for missing entities; deterministic-first guardrails mandatory.
 
-- Подключаются только флагами и не меняют выбор `action/job_type`.
-- Используются как подсказки для отсутствующих сущностей, deterministic-first guardrails обязательны.
+# Offline-friendly checks
 
-## Skills
+- `make release-sanity` skips `api-sanity` if `fastapi` is unavailable.
+- Full API sanity: `RUN_API_SANITY=1 make release-sanity`.
 
-Skills live under `skills/*`. Each skill has its own directory with implementation and metadata, and may include its own Make targets for local execution or validation.
+# Canonical Commands
 
-## Keep diagrams in sync
-
-If you change `contracts/`, `graphs/`, `agents/`, or `api`, check whether C4/sequence diagrams need updates. If you did not update diagrams, explain why in the commit/PR description.
-
-## Canonical Commands
-
-- `make validate_contracts`
-- `make run_graph`
-- `make run_graph_suite`
-- `make audit_decisions`
-- `make release_sanity`
+```bash
+python3 -m pytest tests/ -v        # full test suite
+make validate_contracts             # contract validation
+make run_graph                      # single graph run
+make run_graph_suite                # full graph regression
+make audit_decisions                # decision log audit
+make release-sanity                 # release sanity check
+```
