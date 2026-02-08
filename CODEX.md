@@ -1,3 +1,10 @@
+# Environment
+
+- Python binary: **`python3`** (NOT `python`). The system does not have a `python` symlink.
+- Virtual environment: `.venv/` (activate with `source .venv/bin/activate` or call `.venv/bin/python3` directly).
+- Test runner: `.venv/bin/pytest` or `python3 -m pytest`.
+- All verification commands must use `python3`, not `python`.
+
 # Core Principles
 
 1. **Stateless operation**: The system must not persist data between runs. Every decision is derived strictly from the provided command payload.
