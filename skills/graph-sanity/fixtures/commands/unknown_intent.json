@@ -1,0 +1,13 @@
+{
+  "command_id": "cmd-wp000-006",
+  "user_id": "user-206",
+  "timestamp": "2026-02-01T10:05:00+00:00",
+  "text": "Что-то непонятное про погоду",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-206",
+      "members": [{"user_id": "user-206", "display_name": "Саша"}]
+    }
+  }
+}

@@ -23,6 +23,12 @@ This index tracks all ADRs in the project. Update this file when creating/supers
 | ADR-013 | Routine Scheduler Design (EP-010) | accepted | 2026-01-28 | [Link](../adr/013-routine-scheduler-design.md) |
 | ADR-014 | ShoppingRun Entity Design (EP-013) | proposed | 2026-02-03 | [Link](../adr/014-shopping-run-entity-design.md) |
 | ADR-015 | Marketplace Link-out Encoding (EP-013) | proposed | 2026-02-03 | [Link](../adr/015-marketplace-linkout-encoding.md) |
+| ADR-000 | AI Platform — Contract-first Intent → Decision Engine | accepted | 2025-12-XX | [Link](../adr/ADR-000-ai-platform-intent-decision-engine.md) |
+| ADR-001-P | Contract versioning & compatibility policy (Platform) | accepted | 2026-01-XX | [Link](../adr/ADR-001-contract-versioning-compatibility-policy.md) |
+| ADR-002-P | Agent model & execution boundaries (MVP) | accepted | 2026-01-XX | [Link](../adr/ADR-002-agent-model-execution-boundaries-mvp.md) |
+| ADR-003-P | LLM model policy registry & escalation | proposed | 2026-01-12 | [Link](../adr/ADR-003-llm-model-policy-registry-and-escalation.md) |
+| ADR-004-P | Partial Trust corridor | draft | 2026-01-XX | [Link](../adr/ADR-004-partial-trust-corridor.md) |
+| ADR-005-P | Internal Agent Contract v0 (ABI) | accepted | 2026-01-XX | [Link](../adr/ADR-005-internal-agent-contract-v0.md) |
 
 ## Template
 

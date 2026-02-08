@@ -16,6 +16,20 @@ dev = [
   "pytest",
 ]
 
+[tool.setuptools.packages.find]
+include = [
+  "app*",
+  "agents*",
+  "agent_registry*",
+  "agent_runner*",
+  "codex*",
+  "contracts*",
+  "graphs*",
+  "llm_policy*",
+  "routers*",
+  "skills*",
+]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"

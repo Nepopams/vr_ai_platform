@@ -1,0 +1,15 @@
+{
+  "command_id": "cmd-wp000-001",
+  "user_id": "user-201",
+  "timestamp": "2026-02-01T10:00:00+00:00",
+  "text": "Купи молоко",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-201",
+      "members": [{"user_id": "user-201", "display_name": "Анна"}],
+      "shopping_lists": [{"list_id": "list-1", "name": "Продукты"}]
+    },
+    "defaults": {"default_list_id": "list-1"}
+  }
+}

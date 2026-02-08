@@ -1,0 +1,15 @@
+{
+  "command_id": "cmd-wp000-010",
+  "user_id": "user-210",
+  "timestamp": "2026-02-01T10:09:00+00:00",
+  "text": "Buy apples and oranges",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-210",
+      "members": [{"user_id": "user-210", "display_name": "Alex"}],
+      "shopping_lists": [{"list_id": "list-en", "name": "Groceries"}]
+    },
+    "defaults": {"default_list_id": "list-en"}
+  }
+}

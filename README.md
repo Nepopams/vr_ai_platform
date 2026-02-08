@@ -7,7 +7,11 @@ HomeTask AI System is a stateless, contract-driven decision pipeline that powers
 Python 3.11+ is required.
 
 ```bash
-make run_graph
+make setup-dev              # create venv + install dev dependencies
+source .venv/bin/activate   # activate virtualenv
+make test                   # run full test suite
+make test-core              # run minimal suite (no API deps)
+make run_graph              # run core graph with sample command
 ```
 
 ## Repository Structure

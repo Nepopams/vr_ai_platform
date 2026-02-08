@@ -1,7 +1,21 @@
-.PHONY: setup run_graph test validate_contracts contract-checker schema-bump fixtures-generator decision-log-audit graph-sanity api-sanity release-sanity release-sanity-full diagrams
+.PHONY: setup setup-dev run_graph test validate_contracts contract-checker schema-bump fixtures-generator decision-log-audit graph-sanity api-sanity release-sanity release-sanity-full diagrams
+
+VENV := .venv
+PYTHON := $(VENV)/bin/python
 
 setup:
-	pip install -e .
+	python3 -m venv $(VENV)
+	$(VENV)/bin/pip install -e .
+	@echo ""
+	@echo "Virtualenv ready. Activate with:"
+	@echo "  source $(VENV)/bin/activate"
+
+setup-dev:
+	python3 -m venv $(VENV)
+	$(VENV)/bin/pip install -e ".[dev]"
+	@echo ""
+	@echo "Virtualenv ready. Activate with:"
+	@echo "  source $(VENV)/bin/activate"
 
 run_graph:
 	python -m graphs.core_graph

@@ -1,0 +1,15 @@
+{
+  "command_id": "cmd-wp000-003",
+  "user_id": "user-203",
+  "timestamp": "2026-02-01T10:02:00+00:00",
+  "text": "Убраться в ванной",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-203",
+      "members": [{"user_id": "user-203", "display_name": "Лена"}],
+      "zones": [{"zone_id": "zone-bath", "name": "Ванная"}]
+    },
+    "defaults": {"default_assignee_id": "user-203"}
+  }
+}
