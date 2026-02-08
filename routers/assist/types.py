@@ -18,7 +18,7 @@ class NormalizationHint:
 
 @dataclass(frozen=True)
 class EntityHints:
-    items: List[str]
+    items: List[dict]
     task_hints: Dict[str, object]
     confidence: Optional[float]
     error_type: Optional[str]
@@ -28,7 +28,7 @@ class EntityHints:
 @dataclass(frozen=True)
 class AgentEntityHint:
     status: str
-    items: List[str]
+    items: List[dict]
     latency_ms: Optional[int]
     candidates_count: int = 0
     selected_agent_id: Optional[str] = None

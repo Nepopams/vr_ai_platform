@@ -64,7 +64,19 @@ _NORMALIZATION_SCHEMA = {
 _ENTITY_SCHEMA = {
     "type": "object",
     "properties": {
-        "items": {"type": "array", "items": {"type": "string"}},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "minLength": 1},
+                    "quantity": {"type": ["string", "null"]},
+                    "unit": {"type": ["string", "null"]},
+                },
+                "required": ["name"],
+                "additionalProperties": False,
+            },
+        },
         "task_hints": {"type": "object"},
         "confidence": {"type": "number"},
     },
@@ -172,7 +184,7 @@ def _run_entity_hint(text: str) -> EntityHints:
             latency_ms=result.get("latency_ms"),
         )
     payload = result["payload"]
-    items = [item for item in payload.get("items", []) if isinstance(item, str)]
+    items = [item for item in payload.get("items", []) if isinstance(item, dict) and item.get("name")]
     task_hints = payload.get("task_hints") if isinstance(payload.get("task_hints"), dict) else {}
     return EntityHints(
         items=items,
@@ -233,7 +245,13 @@ def _run_agent_entity_hint(command: Dict[str, Any], normalized: Dict[str, Any]) 
             continue
         payload = output.payload if isinstance(output.payload, dict) else None
         items_payload = payload.get("items") if isinstance(payload, dict) else None
-        items = [item for item in items_payload if isinstance(item, str)] if isinstance(items_payload, list) else []
+        items: List[dict] = []
+        if isinstance(items_payload, list):
+            for item in items_payload:
+                if isinstance(item, dict) and item.get("name"):
+                    items.append(item)
+                elif isinstance(item, str) and item.strip():
+                    items.append({"name": item.strip()})
         applicable = bool(_pick_matching_item(items, text)) if output.status == "ok" else False
         scored_candidates.append(
             AgentHintCandidate(
@@ -431,11 +449,12 @@ def _apply_entity_hints(
         if (
             agent_hint.status == "ok"
             and normalized.get("intent") == "add_shopping_item"
-            and not updated.get("item_name")
         ):
-            item = _pick_matching_item(agent_hint.items, original_text)
-            if item:
-                updated["item_name"] = item
+            matched = _pick_matching_items(agent_hint.items, original_text)
+            if matched:
+                updated["items"] = matched
+                if not updated.get("item_name"):
+                    updated["item_name"] = matched[0].get("name")
                 agent_applied = True
                 accepted = True
 
@@ -450,10 +469,12 @@ def _apply_entity_hints(
         else:
             llm_status = "ok"
             llm_error_type = None
-            if normalized.get("intent") == "add_shopping_item" and not updated.get("item_name"):
-                item = _pick_matching_item(hint.items, original_text)
-                if item:
-                    updated["item_name"] = item
+            if normalized.get("intent") == "add_shopping_item":
+                matched = _pick_matching_items(hint.items, original_text)
+                if matched:
+                    updated["items"] = matched
+                    if not updated.get("item_name"):
+                        updated["item_name"] = matched[0].get("name")
                     accepted = True
 
     status = llm_status
@@ -548,8 +569,8 @@ def _build_normalization_prompt(text: str) -> str:
 
 def _build_entity_prompt(text: str) -> str:
     return (
-        "Извлеки сущности для shopping/task. "
-        "Верни JSON со списком items и task_hints.\n"
+        "Извлеки все сущности для shopping/task. "
+        "Верни JSON со списком items (объекты с name, quantity, unit) и task_hints.\n"
         f"Текст: {text}"
     )
 
@@ -581,13 +602,27 @@ def _tokens(text: str) -> set[str]:
     return set(words)
 
 
-def _pick_matching_item(items: Iterable[str], text: str) -> Optional[str]:
+def _pick_matching_item(items: Iterable[dict], text: str) -> Optional[dict]:
+    """Return the first item whose name appears in text."""
     lowered = text.lower()
     for item in items:
-        candidate = item.strip()
+        name = item.get("name", "") if isinstance(item, dict) else str(item)
+        candidate = name.strip()
         if candidate and candidate.lower() in lowered:
-            return candidate
+            return item
     return None
+
+
+def _pick_matching_items(items: Iterable[dict], text: str) -> List[dict]:
+    """Return all items whose name appears in text."""
+    lowered = text.lower()
+    matched: List[dict] = []
+    for item in items:
+        name = item.get("name", "") if isinstance(item, dict) else str(item)
+        candidate = name.strip()
+        if candidate and candidate.lower() in lowered:
+            matched.append(item)
+    return matched
 
 
 def _clarify_question_is_safe(question: str, intent: Optional[str], original_text: str) -> bool:
@@ -605,7 +640,7 @@ def _clarify_question_is_safe(question: str, intent: Optional[str], original_tex
     return "?" in question
 
 
-def _summarize_entities(items: Iterable[str]) -> Dict[str, Any]:
+def _summarize_entities(items: Iterable) -> Dict[str, Any]:
     items_list = list(items)
     keys = ["items"] if items_list else []
     counts = {"items": len(items_list)} if keys else {}

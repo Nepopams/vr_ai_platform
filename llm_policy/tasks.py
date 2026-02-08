@@ -12,18 +12,36 @@ SHOPPING_EXTRACTION_TASK_ID = "shopping_extraction"
 SHOPPING_EXTRACTION_SCHEMA: Mapping[str, object] = {
     "type": "object",
     "properties": {
-        "item_name": {"type": "string", "minLength": 1},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "minLength": 1},
+                    "quantity": {"type": ["string", "null"]},
+                    "unit": {"type": ["string", "null"]},
+                },
+                "required": ["name"],
+                "additionalProperties": False,
+            },
+        },
     },
-    "required": ["item_name"],
+    "required": ["items"],
     "additionalProperties": False,
 }
 
 
 @dataclass(frozen=True)
 class ExtractionResult:
-    item_name: str | None
+    items: list[dict]
     used_policy: bool
     error_type: str | None
+
+    @property
+    def item_name(self) -> str | None:
+        if self.items:
+            return self.items[0].get("name")
+        return None
 
 
 def extract_shopping_item_name(
@@ -35,8 +53,10 @@ def extract_shopping_item_name(
 ) -> ExtractionResult:
     enabled = is_llm_policy_enabled() if policy_enabled is None else policy_enabled
     if not enabled:
+        fallback_name = fallback_extract_item_name(text)
+        items = [{"name": fallback_name}] if fallback_name else []
         return ExtractionResult(
-            item_name=fallback_extract_item_name(text),
+            items=items,
             used_policy=False,
             error_type=None,
         )
@@ -48,18 +68,20 @@ def extract_shopping_item_name(
         policy_enabled=enabled,
     )
     if result.status == "skipped" and result.error_type == "policy_disabled":
+        fallback_name = fallback_extract_item_name(text)
+        items = [{"name": fallback_name}] if fallback_name else []
         return ExtractionResult(
-            item_name=fallback_extract_item_name(text),
+            items=items,
             used_policy=False,
             error_type=None,
         )
 
     if result.status == "ok" and result.data is not None:
-        item_name = result.data.get("item_name")
-        if isinstance(item_name, str):
-            return ExtractionResult(item_name=item_name, used_policy=True, error_type=None)
+        raw_items = result.data.get("items", [])
+        items = [item for item in raw_items if isinstance(item, dict) and item.get("name")]
+        return ExtractionResult(items=items, used_policy=True, error_type=None)
 
-    return ExtractionResult(item_name=None, used_policy=True, error_type=result.error_type)
+    return ExtractionResult(items=[], used_policy=True, error_type=result.error_type)
 
 
 def _run_policy_extraction(
@@ -83,8 +105,8 @@ def _run_policy_extraction(
 def _build_shopping_prompt(text: str) -> str:
     schema_text = json.dumps(SHOPPING_EXTRACTION_SCHEMA, ensure_ascii=False)
     return (
-        "Извлеки название товара из текста пользователя. "
-        "Верни только JSON по схеме.\n"
+        "Извлеки все товары из текста пользователя. "
+        "Верни JSON со списком items по схеме.\n"
         f"Схема: {schema_text}\n"
         f"Текст: {text}"
     )

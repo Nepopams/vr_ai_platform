@@ -43,7 +43,7 @@ def test_policy_disabled_uses_rule_based_fixture() -> None:
 def test_policy_enabled_uses_llm(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
     monkeypatch.setenv("LLM_POLICY_ALLOW_PLACEHOLDERS", "true")
-    set_llm_caller(StubCaller('{"item_name": "молоко"}'))
+    set_llm_caller(StubCaller('{"items": [{"name": "молоко"}]}'))
 
     result = extract_shopping_item_name("Купи молоко", policy_enabled=True)
 

@@ -114,7 +114,7 @@ def test_assist_entity_whitelist(monkeypatch):
     monkeypatch.setenv("ASSIST_CLARIFY_ENABLED", "false")
 
     entity_hint = EntityHints(
-        items=["хлеб"],
+        items=[{"name": "хлеб"}],
         task_hints={},
         confidence=0.4,
         error_type=None,

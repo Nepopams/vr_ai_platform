@@ -17,7 +17,7 @@ class AgentHintCandidate:
     applicable: bool
     latency_ms: Optional[int]
     payload: dict | None
-    items: list[str]
+    items: list[dict]
 
 
 def select_best_candidate(
