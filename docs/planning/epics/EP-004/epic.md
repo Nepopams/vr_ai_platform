@@ -1,6 +1,6 @@
 # EP-004: Multi-Entity Extraction for Shopping Commands
 
-**Status:** Ready
+**Status:** Done
 **Initiative:** `docs/planning/initiatives/INIT-2026Q2-multi-entity-extraction.md`
 **Owner:** TBD
 
@@ -78,9 +78,9 @@ produce multiple `proposed_actions`, one per item, without breaking contract com
 | Story ID | Title | Status | Flags |
 |----------|-------|--------|-------|
 | [ST-008](stories/ST-008-multi-item-model-adr.md) | ADR-lite: Multi-item internal model and quantity type resolution | Done (ADR-006-P Accepted) | contract_impact=review, adr_needed=lite |
-| [ST-009](stories/ST-009-baseline-multi-item-extraction.md) | Baseline multi-item extraction and golden dataset expansion | Ready (unblocked) | contract_impact=no |
-| [ST-010](stories/ST-010-llm-assist-multi-item.md) | LLM extraction and assist mode multi-item support | Ready (dep: ST-009) | contract_impact=no |
-| [ST-011](stories/ST-011-planner-multi-action-e2e.md) | V2 planner multi-action generation and end-to-end integration | Ready (dep: ST-009, soft: ST-010) | contract_impact=review |
+| [ST-009](stories/ST-009-baseline-multi-item-extraction.md) | Baseline multi-item extraction and golden dataset expansion | Done (a594234) | contract_impact=no |
+| [ST-010](stories/ST-010-llm-assist-multi-item.md) | LLM extraction and assist mode multi-item support | Done (b454ec1) | contract_impact=no |
+| [ST-011](stories/ST-011-planner-multi-action-e2e.md) | V2 planner multi-action generation and end-to-end integration | Done (a3f16af) | contract_impact=review |
 
 ## Dependencies
 
@@ -123,10 +123,11 @@ ST-010          ST-011
 
 ## Readiness Report
 
-### Done
-- **ST-008** -- ADR-006-P created and Accepted (2026-02-08). All decisions documented.
+### All Done (Sprint S03 completed 2026-02-08)
+- **ST-008** -- ADR-006-P created and Accepted. All decisions documented.
+- **ST-009** -- Baseline multi-item extraction. Merged as `a594234`. +18 tests.
+- **ST-010** -- LLM extraction and assist mode multi-item. Merged as `b454ec1`. +16 tests.
+- **ST-011** -- V2 planner multi-action and E2E. Merged as `a3f16af`. +11 tests.
 
-### Ready
-- **ST-009** -- Unblocked (ST-008 Done). All DoR criteria met. Sprint S03 committed.
-- **ST-010** -- DoR met. Managed dependency on ST-009 (execution order). Sprint S03 committed.
-- **ST-011** -- DoR met. Hard dep on ST-009, soft dep on ST-010 (execution order). Sprint S03 committed.
+**Epic closed.** All 4 stories done, initiative INIT-2026Q2-multi-entity-extraction marked Done.
+Test suite: 131 -> 176 (+45 tests). Zero contract schema changes required.
