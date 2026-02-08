@@ -5,7 +5,7 @@ from agent_runner.schemas import shopping_extraction_schema
 
 def test_schema_allows_basic_payload():
     schema = shopping_extraction_schema()
-    payload = {"items": [{"name": "молоко", "quantity": 1, "unit": "л"}]}
+    payload = {"items": [{"name": "молоко", "quantity": "1", "unit": "л"}]}
     validate(instance=payload, schema=schema)
 
 

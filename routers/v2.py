@@ -9,6 +9,7 @@ from graphs.core_graph import (
     build_proposed_action,
     build_start_job_decision,
     detect_intent,
+    extract_items,
     _default_assignee_id,
     _default_list_id,
 )
@@ -63,6 +64,7 @@ class RouterV2Pipeline(RouterStrategy):
             if intent == "add_shopping_item"
             else None
         )
+        items = extract_items(text) if intent == "add_shopping_item" else []
         task_title = text if intent == "create_task" else None
         capabilities = set(command.get("capabilities", []))
         if intent == "add_shopping_item" and runner_enabled():
@@ -71,6 +73,7 @@ class RouterV2Pipeline(RouterStrategy):
         return {
             "text": text,
             "intent": intent,
+            "items": items,
             "item_name": item_name,
             "task_title": task_title,
             "capabilities": capabilities,

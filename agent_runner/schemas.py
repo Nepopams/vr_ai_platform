@@ -19,7 +19,7 @@ def shopping_extraction_schema() -> Dict[str, Any]:
                     "required": ["name"],
                     "properties": {
                         "name": {"type": "string", "minLength": 1, "maxLength": 80},
-                        "quantity": {"type": ["number", "null"], "minimum": 0},
+                        "quantity": {"type": ["string", "null"], "maxLength": 32},
                         "unit": {"type": ["string", "null"], "maxLength": 32},
                     },
                 },

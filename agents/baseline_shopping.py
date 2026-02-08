@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from graphs.core_graph import extract_item_name, _default_list_id
+from graphs.core_graph import extract_items, _default_list_id
 
 
 def run(agent_input: Dict[str, Any], trace_id: str | None = None) -> Dict[str, Any]:
     text = agent_input.get("text", "")
-    item_name = extract_item_name(text) if isinstance(text, str) else None
-    items: List[str] = []
-    if item_name:
-        items.append(item_name)
+    items: List[Dict[str, Any]] = extract_items(text) if isinstance(text, str) else []
 
     context = agent_input.get("context")
     list_id = None

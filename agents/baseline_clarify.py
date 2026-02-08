@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from graphs.core_graph import detect_intent, extract_item_name
+from graphs.core_graph import detect_intent, extract_items
 
 
 def run(agent_input: Dict[str, Any], trace_id: str | None = None) -> Dict[str, Any]:
@@ -18,7 +18,7 @@ def run(agent_input: Dict[str, Any], trace_id: str | None = None) -> Dict[str, A
         question = "Опишите запрос подробнее."
         missing_fields = ["text"]
     elif intent == "add_shopping_item":
-        if not extract_item_name(text):
+        if not extract_items(text):
             question = "Уточните, что добавить в список."
             missing_fields = ["item.name"]
     elif intent == "create_task":

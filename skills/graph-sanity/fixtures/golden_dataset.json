@@ -4,6 +4,7 @@
     "fixture_file": "buy_milk.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
+    "expected_item_count": 1,
     "notes": "Купи молоко — keyword 'куп'"
   },
   {
@@ -11,7 +12,9 @@
     "fixture_file": "buy_bread_and_eggs.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
-    "notes": "Купить хлеб и яйца — keyword 'куп'"
+    "expected_item_count": 2,
+    "expected_item_names": ["хлеб", "яйца"],
+    "notes": "Купить хлеб и яйца — keyword 'куп', multi-item conjunction"
   },
   {
     "command_id": "cmd-wp000-003",
@@ -53,6 +56,7 @@
     "fixture_file": "shopping_no_list.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
+    "expected_item_count": 1,
     "notes": "Купи бананы — keyword 'куп', no shopping list in context"
   },
   {
@@ -67,28 +71,34 @@
     "fixture_file": "buy_apples_en.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
-    "notes": "Buy apples and oranges — keyword 'buy'"
+    "expected_item_count": 2,
+    "expected_item_names": ["apples", "oranges"],
+    "notes": "Buy apples and oranges — keyword 'buy', multi-item conjunction (English)"
   },
   {
     "command_id": "cmd-wp000-011",
     "fixture_file": "multiple_tasks.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
-    "notes": "Купи молоко и убери кухню — keyword 'куп' wins (shopping checked first)"
+    "expected_item_count": 1,
+    "notes": "Купи молоко и убери кухню — keyword 'куп' wins, multi-intent not split"
   },
   {
     "command_id": "cmd-wp000-012",
     "fixture_file": "add_sugar_ru.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
-    "notes": "Добавь сахар в список покупок — 'куп' substring in 'покупок'"
+    "expected_item_count": 1,
+    "notes": "Добавь сахар в список покупок — 'куп' substring in 'покупок', trailing context removed"
   },
   {
     "command_id": "cmd-graph-002",
     "fixture_file": "grocery_run.json",
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
-    "notes": "Купи яблоки и молоко — keyword 'куп'"
+    "expected_item_count": 2,
+    "expected_item_names": ["яблоки", "молоко"],
+    "notes": "Купи яблоки и молоко — keyword 'куп', multi-item conjunction"
   },
   {
     "command_id": "cmd-graph-001",

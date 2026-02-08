@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re as _re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -66,6 +67,61 @@ def extract_item_name(text: str) -> Optional[str]:
             candidate = text[start:].strip()
             return candidate or None
     return None
+
+
+def extract_items(text: str) -> List[Dict[str, Any]]:
+    """Split shopping text into individual items with optional quantity/unit.
+
+    Supports comma and conjunction ("и"/"and") separation.
+    Returns list of dicts: [{name, quantity?, unit?}].
+    """
+    lowered = text.lower()
+    raw = None
+    for pattern in ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить "):
+        if pattern in lowered:
+            start = lowered.find(pattern) + len(pattern)
+            raw = text[start:].strip()
+            break
+    if not raw:
+        return []
+
+    # Remove trailing context phrases
+    for stop in (" в список", " в корзину", " in the list", " to the list"):
+        idx = raw.lower().find(stop)
+        if idx > 0:
+            raw = raw[:idx].strip()
+
+    # Split on comma and conjunctions
+    parts = _re.split(r"\s*,\s*|\s+и\s+|\s+and\s+", raw)
+    parts = [p.strip() for p in parts if p.strip()]
+
+    items: List[Dict[str, Any]] = []
+    for part in parts:
+        item = _parse_item_part(part)
+        if item:
+            items.append(item)
+    return items
+
+
+def _parse_item_part(part: str) -> Optional[Dict[str, Any]]:
+    """Parse a single item part, extracting optional quantity and unit."""
+    # Pattern: "2 литра молока" or "3 liters milk"
+    match = _re.match(r"^(\d+)\s+(\S+)\s+(.+)$", part)
+    if match:
+        return {
+            "name": match.group(3).strip(),
+            "quantity": match.group(1),
+            "unit": match.group(2),
+        }
+    # Pattern: "3 яблока" (quantity without unit)
+    match = _re.match(r"^(\d+)\s+(.+)$", part)
+    if match:
+        return {
+            "name": match.group(2).strip(),
+            "quantity": match.group(1),
+        }
+    # Just a name
+    return {"name": part}
 
 
 def build_proposed_action(action: str, payload: Dict[str, Any]) -> Dict[str, Any]:

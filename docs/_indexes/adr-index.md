@@ -29,6 +29,7 @@ This index tracks all ADRs in the project. Update this file when creating/supers
 | ADR-003-P | LLM model policy registry & escalation | proposed | 2026-01-12 | [Link](../adr/ADR-003-llm-model-policy-registry-and-escalation.md) |
 | ADR-004-P | Partial Trust corridor | accepted | 2026-02-08 | [Link](../adr/ADR-004-partial-trust-corridor.md) |
 | ADR-005-P | Internal Agent Contract v0 (ABI) | accepted | 2026-01-XX | [Link](../adr/ADR-005-internal-agent-contract-v0.md) |
+| ADR-006-P | Multi-item internal model & quantity type | accepted | 2026-02-08 | [Link](../adr/ADR-006-multi-item-internal-model.md) |
 
 ## Template
 
