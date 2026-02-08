@@ -1,5 +1,6 @@
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -33,14 +34,14 @@ def test_runner_baseline_agents(tmp_path, monkeypatch):
     agents = _load_registry()
 
     shopping_output = run(
-        agents["baseline-shopping-extractor"],
+        replace(agents["baseline-shopping-extractor"], enabled=True),
         {"text": "Купи молоко", "context": {"household": {"shopping_lists": []}}},
     )
     assert shopping_output.status == "ok"
     assert "items" in (shopping_output.payload or {})
 
     clarify_output = run(
-        agents["baseline-clarify-suggestor"],
+        replace(agents["baseline-clarify-suggestor"], enabled=True),
         {"text": ""},
     )
     assert clarify_output.status == "ok"

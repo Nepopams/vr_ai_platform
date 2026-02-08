@@ -204,11 +204,18 @@ def _tokenize_yaml(raw: str) -> list[tuple[int, str]]:
     return tokens
 
 
-def _parse_scalar(value: str) -> str:
+def _parse_scalar(value: str) -> str | list:
     if value.startswith("\"") and value.endswith("\""):
         return value[1:-1]
     if value.startswith("'") and value.endswith("'"):
         return value[1:-1]
+    if value.startswith("[") and value.endswith("]"):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
     return value
 
 

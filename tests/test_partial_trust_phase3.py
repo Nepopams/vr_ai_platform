@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import routers.partial_trust_candidate as partial_candidate
+import routers.v2 as v2_module
 from routers.partial_trust_types import LLMDecisionCandidate
 from routers.v2 import RouterV2Pipeline
 
@@ -87,9 +88,9 @@ def test_partial_trust_accepts_candidate(monkeypatch, tmp_path):
     monkeypatch.setenv("PARTIAL_TRUST_INTENT", "add_shopping_item")
     monkeypatch.setenv("PARTIAL_TRUST_SAMPLE_RATE", "1")
     monkeypatch.setenv("PARTIAL_TRUST_RISK_LOG_PATH", str(log_path))
-    monkeypatch.setattr(partial_candidate, "policy_route_available", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(v2_module, "policy_route_available", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(
-        partial_candidate,
+        v2_module,
         "generate_llm_candidate_with_meta",
         lambda *_args, **_kwargs: (_candidate(), None),
     )
@@ -110,7 +111,7 @@ def test_partial_trust_rejected_candidate(monkeypatch, tmp_path):
     monkeypatch.setenv("PARTIAL_TRUST_INTENT", "add_shopping_item")
     monkeypatch.setenv("PARTIAL_TRUST_SAMPLE_RATE", "1")
     monkeypatch.setenv("PARTIAL_TRUST_RISK_LOG_PATH", str(log_path))
-    monkeypatch.setattr(partial_candidate, "policy_route_available", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(v2_module, "policy_route_available", lambda *_args, **_kwargs: True)
     bad_candidate = LLMDecisionCandidate(
         intent="create_task",
         job_type="create_task",
@@ -123,7 +124,7 @@ def test_partial_trust_rejected_candidate(monkeypatch, tmp_path):
         error_type=None,
     )
     monkeypatch.setattr(
-        partial_candidate,
+        v2_module,
         "generate_llm_candidate_with_meta",
         lambda *_args, **_kwargs: (bad_candidate, None),
     )

@@ -66,16 +66,22 @@ def test_intent_coverage_has_executors(tmp_path: Path) -> None:
 
 
 def test_disabled_registry_no_side_effects() -> None:
+    evicted = {}
     for module in list(sys.modules):
         if module == "agent_registry" or module.startswith("agent_registry."):
-            sys.modules.pop(module, None)
+            evicted[module] = sys.modules.pop(module)
+    evicted_core = sys.modules.pop("graphs.core_graph", None)
 
-    sys.modules.pop("graphs.core_graph", None)
+    try:
+        import graphs.core_graph
 
-    import graphs.core_graph
+        assert "agent_registry" not in sys.modules
 
-    assert "agent_registry" not in sys.modules
+        from agent_registry.loader import AgentRegistryLoader
 
-    from agent_registry.loader import AgentRegistryLoader
-
-    assert AgentRegistryLoader.load(enabled=False) is None
+        assert AgentRegistryLoader.load(enabled=False) is None
+    finally:
+        for name, mod in evicted.items():
+            sys.modules[name] = mod
+        if evicted_core is not None:
+            sys.modules["graphs.core_graph"] = evicted_core
