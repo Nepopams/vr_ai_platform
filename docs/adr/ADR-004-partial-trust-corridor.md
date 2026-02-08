@@ -1,7 +1,7 @@
 # ADR-004: Partial Trust Corridor (LLM-first, ограниченный коридор)
 
-- Status: Draft
-- Date: 2026-01-12
+- Status: Accepted
+- Date: 2026-02-08
 - Related ADRs:
   - ADR-000: `docs/adr/ADR-000-ai-platform-intent-decision-engine.md`
   - ADR-001: `docs/adr/ADR-001-contract-versioning-compatibility-policy.md`
