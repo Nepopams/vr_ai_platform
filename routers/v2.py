@@ -84,10 +84,27 @@ class RouterV2Pipeline(RouterStrategy):
         proposed_actions: List[Dict[str, Any]] = []
         capabilities: Set[str] = normalized["capabilities"]
 
-        if intent == "add_shopping_item" and normalized.get("item_name"):
-            if "propose_add_shopping_item" in capabilities:
+        if intent == "add_shopping_item":
+            items = normalized.get("items", [])
+            if items and "propose_add_shopping_item" in capabilities:
                 list_id = _default_list_id(command)
-                item_payload: Dict[str, Any] = {"name": normalized["item_name"]}
+                for item in items:
+                    item_payload: Dict[str, Any] = {"name": item["name"]}
+                    if item.get("quantity"):
+                        item_payload["quantity"] = item["quantity"]
+                    if item.get("unit"):
+                        item_payload["unit"] = item["unit"]
+                    if list_id:
+                        item_payload["list_id"] = list_id
+                    proposed_actions.append(
+                        build_proposed_action(
+                            "propose_add_shopping_item",
+                            {"item": item_payload},
+                        )
+                    )
+            elif normalized.get("item_name") and "propose_add_shopping_item" in capabilities:
+                list_id = _default_list_id(command)
+                item_payload = {"name": normalized["item_name"]}
                 if list_id:
                     item_payload["list_id"] = list_id
                 proposed_actions.append(
@@ -150,7 +167,7 @@ class RouterV2Pipeline(RouterStrategy):
             )
 
         if intent == "add_shopping_item":
-            if not normalized.get("item_name"):
+            if not normalized.get("items") and not normalized.get("item_name"):
                 return build_clarify_decision(
                     command,
                     question=self._clarify_question(
