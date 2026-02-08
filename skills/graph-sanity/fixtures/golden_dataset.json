@@ -1,0 +1,100 @@
+[
+  {
+    "command_id": "cmd-wp000-001",
+    "fixture_file": "buy_milk.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Купи молоко — keyword 'куп'"
+  },
+  {
+    "command_id": "cmd-wp000-002",
+    "fixture_file": "buy_bread_and_eggs.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Купить хлеб и яйца — keyword 'куп'"
+  },
+  {
+    "command_id": "cmd-wp000-003",
+    "fixture_file": "clean_bathroom.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "notes": "Убраться в ванной — keyword 'убраться'"
+  },
+  {
+    "command_id": "cmd-wp000-004",
+    "fixture_file": "fix_faucet.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "notes": "Починить кран на кухне — keyword 'починить'"
+  },
+  {
+    "command_id": "cmd-wp000-005",
+    "fixture_file": "empty_text.json",
+    "expected_intent": "clarify_needed",
+    "expected_entity_keys": [],
+    "notes": "Whitespace-only text — no keywords"
+  },
+  {
+    "command_id": "cmd-wp000-006",
+    "fixture_file": "unknown_intent.json",
+    "expected_intent": "clarify_needed",
+    "expected_entity_keys": [],
+    "notes": "Что-то непонятное про погоду — no keywords match"
+  },
+  {
+    "command_id": "cmd-wp000-007",
+    "fixture_file": "minimal_context.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "notes": "Сделай что-нибудь полезное — keyword 'сделай'"
+  },
+  {
+    "command_id": "cmd-wp000-008",
+    "fixture_file": "shopping_no_list.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Купи бананы — keyword 'куп', no shopping list in context"
+  },
+  {
+    "command_id": "cmd-wp000-009",
+    "fixture_file": "task_no_zones.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "notes": "Нужно помыть окна — keyword 'нужно'"
+  },
+  {
+    "command_id": "cmd-wp000-010",
+    "fixture_file": "buy_apples_en.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Buy apples and oranges — keyword 'buy'"
+  },
+  {
+    "command_id": "cmd-wp000-011",
+    "fixture_file": "multiple_tasks.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Купи молоко и убери кухню — keyword 'куп' wins (shopping checked first)"
+  },
+  {
+    "command_id": "cmd-wp000-012",
+    "fixture_file": "add_sugar_ru.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Добавь сахар в список покупок — 'куп' substring in 'покупок'"
+  },
+  {
+    "command_id": "cmd-graph-002",
+    "fixture_file": "grocery_run.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "notes": "Купи яблоки и молоко — keyword 'куп'"
+  },
+  {
+    "command_id": "cmd-graph-001",
+    "fixture_file": "weekly_chores.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "notes": "Нужно убрать кухню и составить план — keyword 'нужно'"
+  }
+]
