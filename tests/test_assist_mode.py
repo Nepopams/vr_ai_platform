@@ -99,7 +99,11 @@ def test_assist_clarify_rejects_mismatched_missing_fields(monkeypatch):
         error_type=None,
         latency_ms=10,
     )
-    monkeypatch.setattr(assist_runner, "_run_clarify_hint", lambda _text, _intent: clarify_hint)
+    monkeypatch.setattr(
+        assist_runner,
+        "_run_clarify_hint",
+        lambda _text, _intent, _normalized=None: clarify_hint,
+    )
     decision = router.decide(_command(""))
 
     assert decision["action"] == "clarify"

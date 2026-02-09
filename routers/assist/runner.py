@@ -84,11 +84,23 @@ _ENTITY_SCHEMA = {
     "additionalProperties": False,
 }
 
+_CLARIFY_MISSING_FIELDS_VOCAB = [
+    "text",
+    "intent",
+    "item.name",
+    "item.list_id",
+    "task.title",
+    "capability.start_job",
+]
+
 _CLARIFY_SCHEMA = {
     "type": "object",
     "properties": {
         "question": {"type": "string", "minLength": 1},
-        "missing_fields": {"type": "array", "items": {"type": "string"}},
+        "missing_fields": {
+            "type": "array",
+            "items": {"type": "string", "enum": _CLARIFY_MISSING_FIELDS_VOCAB},
+        },
         "confidence": {"type": "number"},
     },
     "required": ["question"],
@@ -136,7 +148,7 @@ def _build_assist_hints(command: Dict[str, Any], normalized: Dict[str, Any]) -> 
         _log_step("entities", "skipped", None, accepted=False, error_type="disabled")
 
     if assist_clarify_enabled():
-        clarify = _run_clarify_hint(command.get("text", ""), normalized.get("intent"))
+        clarify = _run_clarify_hint(command.get("text", ""), normalized.get("intent"), normalized)
     else:
         _log_step("clarify", "skipped", None, accepted=False, error_type="disabled")
 
@@ -299,10 +311,14 @@ def _run_agent_entity_hint(command: Dict[str, Any], normalized: Dict[str, Any]) 
     )
 
 
-def _run_clarify_hint(text: str, intent: Optional[str]) -> ClarifyHint:
+def _run_clarify_hint(
+    text: str,
+    intent: Optional[str],
+    normalized: Optional[Dict[str, Any]] = None,
+) -> ClarifyHint:
     result = _run_llm_task(
         task_id=_CLARIFY_TASK_ID,
-        prompt=_build_clarify_prompt(text, intent),
+        prompt=_build_clarify_prompt(text, intent, normalized),
         schema=_CLARIFY_SCHEMA,
     )
     if result["status"] != "ok":
@@ -516,7 +532,12 @@ def _select_clarify_hint(
         return None, None
 
     question = hint.question.strip() if hint.question else ""
-    if not _clarify_question_is_safe(question, normalized.get("intent"), original_text):
+    if not _clarify_question_is_safe(
+        question,
+        normalized.get("intent"),
+        original_text,
+        missing_fields=hint.missing_fields,
+    ):
         _log_step("clarify", "ok", hint, accepted=False, error_type="rejected", latency_ms=hint.latency_ms)
         return None, None
 
@@ -575,14 +596,33 @@ def _build_entity_prompt(text: str) -> str:
     )
 
 
-def _build_clarify_prompt(text: str, intent: Optional[str]) -> str:
+def _build_clarify_prompt(text: str, intent: Optional[str], normalized: Optional[Dict[str, Any]] = None) -> str:
     intent_label = intent or "unknown"
+    known = _build_known_context(normalized) if normalized else "нет данных"
+    vocab = ", ".join(_CLARIFY_MISSING_FIELDS_VOCAB)
     return (
         "Предложи один уточняющий вопрос и missing_fields. "
-        "Вопрос должен быть конкретным и релевантным.\n"
+        "Вопрос должен быть конкретным и помогать пользователю дополнить недостающую информацию.\n"
+        f"Допустимые missing_fields: {vocab}.\n"
         f"Интент: {intent_label}\n"
+        f"Известно: {known}\n"
         f"Текст: {text}"
     )
+
+
+def _build_known_context(normalized: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    intent = normalized.get("intent")
+    if intent and intent != "clarify_needed":
+        parts.append(f"интент={intent}")
+    items = normalized.get("items", [])
+    if items:
+        parts.append(f"товаров={len(items)}")
+    if normalized.get("item_name"):
+        parts.append("название_товара=есть")
+    if normalized.get("task_title"):
+        parts.append("задача=есть")
+    return ", ".join(parts) if parts else "ничего не извлечено"
 
 
 def _can_accept_normalized_text(original: str, candidate: str) -> bool:
@@ -625,7 +665,43 @@ def _pick_matching_items(items: Iterable[dict], text: str) -> List[dict]:
     return matched
 
 
-def _clarify_question_is_safe(question: str, intent: Optional[str], original_text: str) -> bool:
+_DOMAIN_RELEVANCE_TOKENS = frozenset(
+    {
+        "товар",
+        "продукт",
+        "купить",
+        "покупк",
+        "список",
+        "добавить",
+        "магазин",
+        "задач",
+        "дел",
+        "сделать",
+        "создать",
+        "выполн",
+        "нужн",
+        "хотите",
+        "помочь",
+        "уточн",
+        "item",
+        "product",
+        "buy",
+        "shop",
+        "list",
+        "add",
+        "task",
+        "todo",
+        "create",
+    }
+)
+
+
+def _clarify_question_is_safe(
+    question: str,
+    intent: Optional[str],
+    original_text: str,
+    missing_fields: Optional[List[str]] = None,
+) -> bool:
     if not question:
         return False
     if len(question) < 5:
@@ -635,6 +711,9 @@ def _clarify_question_is_safe(question: str, intent: Optional[str], original_tex
     lowered = question.lower()
     if original_text and original_text.lower() in lowered:
         return False
+    if missing_fields:
+        if not any(token in lowered for token in _DOMAIN_RELEVANCE_TOKENS):
+            return False
     if intent in {"add_shopping_item", "create_task"}:
         return True
     return "?" in question
