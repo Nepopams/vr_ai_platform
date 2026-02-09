@@ -1,0 +1,39 @@
+@startuml agent-registry-integration
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Agent Registry Integration in V2 Pipeline
+
+Person(user, "User", "Sends natural language command")
+
+System_Boundary(platform, "AI Platform") {
+    Component(v2router, "V2 Router", "routers/v2.py", "Pipeline orchestrator")
+    Component(normalize, "Normalize", "routers/v2.py", "Text normalization")
+    Component(shadow_router, "Shadow Router", "routers/shadow_router.py", "LLM shadow suggestions")
+    Component(assist_hints, "Assist Hints", "routers/assist/runner.py", "Entity extraction hints")
+    Component(core_graph, "Core Graph", "graphs/core_graph.py", "Deterministic decision pipeline")
+    Component(shadow_agents, "Shadow Agents", "routers/agent_invoker_shadow.py", "Shadow agent execution")
+    Component(partial_trust, "Partial Trust", "routers/v2.py", "Controlled LLM trust")
+
+    ComponentDb(registry, "Agent Registry", "agent_registry/", "File-based agent registry (YAML)")
+
+    Component(registry_gate, "Registry Gate", "graphs/core_graph.py", "Phase 1: read-only annotation\n(AGENT_REGISTRY_CORE_ENABLED)")
+}
+
+System_Ext(consumer, "HomeTusk", "Product consumer")
+
+Rel(user, v2router, "CommandDTO")
+Rel(v2router, normalize, "1. normalize()")
+Rel(v2router, shadow_router, "2. start_shadow_router()", "async")
+Rel(v2router, assist_hints, "3. apply_assist_hints()")
+Rel(v2router, core_graph, "4-5. plan() + validate_and_build()")
+Rel(v2router, shadow_agents, "6. invoke_shadow_agents()", "fire-and-forget")
+Rel(v2router, partial_trust, "7. _maybe_apply_partial_trust()")
+Rel(v2router, consumer, "DecisionDTO")
+
+Rel(assist_hints, registry, "lookup agents\n(mode=assist)", "flag-gated")
+Rel(shadow_agents, registry, "lookup agents\n(mode=shadow)", "flag-gated")
+Rel_D(registry_gate, registry, "lookup capabilities\n(Phase 1 — planned)", "flag-gated")
+Rel(core_graph, registry_gate, "annotate trace", "if AGENT_REGISTRY_CORE_ENABLED")
+
+SHOW_LEGEND()
+@enduml

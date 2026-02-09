@@ -17,6 +17,7 @@ This index tracks all architecture and flow diagrams in the project.
 | Container Diagram (MVP) | C4 Level 2 | Services and data stores | [Link](../architecture/decisions/mvp/02-container.md) |
 | Component Diagram (Backend) | C4 Level 3 | Backend internal structure | [Link](../architecture/decisions/mvp/03-component-backend.md) |
 | Command Processing Flow | Sequence | NL command → task creation | [Link](../architecture/diagrams/command-processing-flow.md) |
+| Agent Registry Integration | Component / Flow | Registry integration points in V2 pipeline | [Link](../diagrams/agent-registry-integration.puml) |
 
 ## Diagram Lifecycle
 

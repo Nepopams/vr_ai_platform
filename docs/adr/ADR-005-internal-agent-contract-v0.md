@@ -53,3 +53,50 @@
 
 - `AGENTS.md` — обязательные правила агента.
 - `CODEX.md` — требования к изменениям.
+
+## Integration Status
+
+| Component | File | Status | Feature Flag |
+|-----------|------|--------|-------------|
+| Shadow agent invoker | `routers/agent_invoker_shadow.py` | Integrated, flag-gated | `shadow_agent_invoker_enabled` (from `routers.shadow_agent_config`) |
+| Assist mode hints | `routers/assist/runner.py` | Integrated, flag-gated | `assist_agent_hints_enabled()` (from `routers/assist/config.py`) |
+| Core pipeline | `graphs/core_graph.py` | Not yet integrated | `AGENT_REGISTRY_CORE_ENABLED` (planned, Phase 1) |
+
+Notes:
+- Shadow invoker: loads registry via `AgentRegistryV0Loader.load(path_override=...)`, filters by mode="shadow" and allowlist, fire-and-forget execution.
+- Assist hints: loads registry via `AgentRegistryV0Loader.load()`, filters by mode="assist" and capability `extract_entities.shopping`, applies best candidate if matching.
+- Core pipeline: no registry references as of S04. Phase 1 will add a read-only annotation gate.
+
+## Phase 1: Core Pipeline Gate
+
+**Approach:** Registry capabilities lookup annotates decisions with agent metadata (read-only probe).
+
+- The core pipeline (`graphs/core_graph.py`) will query `CapabilitiesLookup` for agents matching the detected intent.
+- A `registry_snapshot` will be attached to the decision trace log (NOT to DecisionDTO response).
+- **No behavior change** to the deterministic baseline — baseline always executes regardless of registry state.
+- Feature flag: `AGENT_REGISTRY_CORE_ENABLED` (env var, default: `false`).
+- Any error or timeout in registry lookup → silently skipped, decision produced normally.
+
+**V2 pipeline flow** (from `routers/v2.py`):
+1. `normalize()`
+2. `start_shadow_router()`
+3. `apply_assist_hints()` ← uses registry (assist mode)
+4. `plan()`
+5. `validate_and_build()`
+6. `invoke_shadow_agents()` ← uses registry (shadow mode)
+7. `_maybe_apply_partial_trust()`
+8. return decision
+
+Phase 1 adds a registry annotation step inside `core_graph.process_command()`, gated by `AGENT_REGISTRY_CORE_ENABLED`.
+
+## Feature Flag Requirements
+
+All registry-related flags default to `false`. Any error or timeout in registry falls back to deterministic baseline.
+
+| Flag | Component | Default | Source | Purpose |
+|------|-----------|---------|--------|---------|
+| `AGENT_REGISTRY_ENABLED` | Registry loader | `false` | `agent_registry/config.py` | Master switch for registry loading |
+| `AGENT_REGISTRY_PATH` | Registry loader | `None` | `agent_registry/config.py` | Optional path override for registry YAML |
+| `shadow_agent_invoker_enabled` | Shadow invoker | `false` | `routers/shadow_agent_config.py` | Enable shadow agent execution |
+| `assist_agent_hints_enabled` | Assist runner | `false` | `routers/assist/config.py` | Enable agent entity hints |
+| `AGENT_REGISTRY_CORE_ENABLED` | Core pipeline | `false` | `agent_registry/config.py` (planned) | Enable registry annotation gate (Phase 1) |
