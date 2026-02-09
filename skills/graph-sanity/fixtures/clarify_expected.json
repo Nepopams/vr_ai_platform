@@ -1,0 +1,37 @@
+[
+  {
+    "command_id": "cmd-wp000-005",
+    "fixture_file": "empty_text.json",
+    "expected_action": "clarify",
+    "expected_missing_fields": ["text"],
+    "notes": "Whitespace-only text triggers clarify for text"
+  },
+  {
+    "command_id": "cmd-wp000-006",
+    "fixture_file": "unknown_intent.json",
+    "expected_action": "clarify",
+    "expected_missing_fields": ["intent"],
+    "notes": "No keyword match triggers clarify for intent"
+  },
+  {
+    "command_id": "cmd-wp000-007",
+    "fixture_file": "minimal_context.json",
+    "expected_action": "start_job",
+    "expected_missing_fields": null,
+    "notes": "sделай matches TASK_KEYWORDS -> create_task -> start_job"
+  },
+  {
+    "command_id": "cmd-wp000-015",
+    "fixture_file": "clarify_partial_shopping.json",
+    "expected_action": "clarify",
+    "expected_missing_fields": ["item.name"],
+    "notes": "Купи matches shopping intent but no item name extractable"
+  },
+  {
+    "command_id": "cmd-wp000-016",
+    "fixture_file": "clarify_ambiguous_intent.json",
+    "expected_action": "clarify",
+    "expected_missing_fields": ["intent"],
+    "notes": "No keyword match triggers clarify for intent"
+  }
+]

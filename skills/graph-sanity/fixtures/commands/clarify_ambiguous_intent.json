@@ -1,0 +1,13 @@
+{
+  "command_id": "cmd-wp000-016",
+  "user_id": "user-216",
+  "timestamp": "2026-02-01T10:15:00+00:00",
+  "text": "Это очень важно",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-216",
+      "members": [{"user_id": "user-216", "display_name": "Олег"}]
+    }
+  }
+}
