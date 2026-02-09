@@ -1,6 +1,6 @@
 # EP-005: Improved Clarify Questions
 
-**Status:** Ready
+**Status:** Done
 **Initiative:** `docs/planning/initiatives/INIT-2026Q2-improved-clarify.md`
 **Owner:** TBD
 
@@ -72,9 +72,9 @@ Improve clarify question quality so that:
 
 | Story ID | Title | Status | Flags |
 |----------|-------|--------|-------|
-| [ST-012](stories/ST-012-enhanced-missing-fields.md) | Enhanced missing_fields detection in baseline | Ready | contract_impact=no, adr_needed=none |
-| [ST-013](stories/ST-013-context-aware-clarify-prompt.md) | Context-aware LLM clarify prompt and safety refinement | Ready (dep: ST-012) | contract_impact=no, adr_needed=none |
-| [ST-014](stories/ST-014-clarify-golden-dataset-measurement.md) | Clarify golden dataset ground truth and quality measurement | Ready (dep: ST-012) | contract_impact=no, adr_needed=none |
+| [ST-012](stories/ST-012-enhanced-missing-fields.md) | Enhanced missing_fields detection in baseline | Done (7668eed) | contract_impact=no, adr_needed=none |
+| [ST-013](stories/ST-013-context-aware-clarify-prompt.md) | Context-aware LLM clarify prompt and safety refinement | Done (13a6438) | contract_impact=no, adr_needed=none |
+| [ST-014](stories/ST-014-clarify-golden-dataset-measurement.md) | Clarify golden dataset ground truth and quality measurement | Done (ad156b8) | contract_impact=no, adr_needed=none |
 
 ## Dependencies
 
