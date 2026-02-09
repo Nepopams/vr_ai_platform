@@ -149,8 +149,9 @@ class RouterV2Pipeline(RouterStrategy):
                 question=self._clarify_question(
                     "Какие действия разрешены для выполнения?",
                     assist,
-                    missing_fields=None,
+                    missing_fields=["capability.start_job"],
                 ),
+                missing_fields=["capability.start_job"],
                 explanation="Отсутствует capability start_job.",
             )
 
@@ -209,8 +210,9 @@ class RouterV2Pipeline(RouterStrategy):
             question=self._clarify_question(
                 "Уточните, что нужно сделать: задача или покупка?",
                 assist,
-                missing_fields=None,
+                missing_fields=["intent"],
             ),
+            missing_fields=["intent"],
             explanation="Интент не распознан.",
         )
 
