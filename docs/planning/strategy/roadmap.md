@@ -5,83 +5,34 @@
 
 ---
 
-## NOW (2026Q1) — измеримость и безопасные подсказки (Highest priority)
+## Completed
 
-Цель фазы: получить **измеримость** и безопасный LLM-слой без влияния на DecisionDTO.
+| Phase | Period | Sprints | Stories | Tests | Initiatives |
+|-------|--------|---------|---------|-------|-------------|
+| 2026Q1 | S01 | 1 | 4/4 | 0→109 | shadow-router, assist-mode |
+| 2026Q2 | S02-S04 | 3 | 9/9 | 109→202 | partial-trust, multi-entity-extraction, improved-clarify |
+| **Total** | | **4** | **13/13** | **202** | **5 done** |
 
-1) **INIT-2026Q1-shadow-router** — Shadow LLM-router и метрики (**Высокий**)
-- RouterSuggestion (internal)
-- параллельный LLM-вызов на каждый CommandDTO (под флагом)
-- JSONL-лог (intent, entities_summary, clarify_question, latency, error_type)
-- анализ golden-dataset (скрипт + гайд)
-- *никакого влияния на DecisionDTO*
-
-2) **INIT-2026Q1-assist-mode** — Assist-режим (normalizer++, entity assist, clarify suggestor) (**Средний**)
-- LLM-normalizer для канонизации фразы
-- улучшение entity extraction (в т.ч. составные/атрибуты в рамках shopping)
-- suggest_clarify + acceptance rules (baseline решает, принимать ли подсказку)
-- таймауты и безопасное логирование
-
-**Gates (обязательные условия):**
-- Feature flags / kill-switch для LLM
-- Никаких raw user text / raw LLM output в логах
-- Deterministic fallback 100%
-
-**Success signals:**
-- Появился воспроизводимый отчёт по golden-dataset
-- Понимаем intent/entity качество LLM и baseline на метриках
-- Нет деградации latency p95 / ошибок при выключенном флаге
+Детали закрытых инициатив: `docs/planning/initiatives/INIT-2026Q1-*.md`, `INIT-2026Q2-*.md`.
+Ретроспективы: `docs/planning/sprints/S01..S04/retro.md`.
 
 ---
 
-## NEXT (2026Q2) — контролируемый Partial Trust и сокращение clarify
-
-Цель фазы: минимально и измеримо повысить “умность” там, где baseline стабилен.
-
-1) **INIT-2026Q2-partial-trust** — Partial Trust для add_shopping_item (**Средний**)
-- sampling 0.01 → 0.1 (конфиг)
-- allowlist строго на один intent
-- risk-log: accepted_llm / fallback / error + причина
-- kill-switch и метрики регрессий
-
-2) **INIT-2026Q2-multi-entity-extraction** — Поддержка множественных сущностей (**Средний**)
-- списки покупок (milk + bread + bananas)
-- количества/единицы/простые атрибуты
-- совместимость с текущими контрактами и схемами
-
-3) **INIT-2026Q2-improved-clarify** — Улучшение вопросов Clarify (**Средний**)
-- missing_fields (internal)
-- LLM-assist для одного осмысленного вопроса
-- baseline уточняет только реально недостающие поля
-- метрика: снижение clarify-итераций
-
-**Gates:**
-- Partial Trust выключен по умолчанию
-- Любая ошибка/таймаут LLM → deterministic-only
-- Регрессии измеримы (risk-log + golden-dataset)
-
-**Success signals:**
-- Снижение среднего числа clarify-итераций
-- Рост доли команд, завершающихся `start_job` (proxy)
-- Partial Trust не увеличивает регрессии по принятым решениям
-
----
-
-## LATER (2026Q3) — процесс, контракты и расширяемость (Low priority)
+## NOW (2026Q3) — процесс, контракты и расширяемость
 
 Цель фазы: закрепить дисциплину разработки и подготовиться к расширению.
 
-1) **INIT-2026Q3-semver-and-ci** — SemVer и CI-контроль контрактов (**Низкий**)
+1) **INIT-2026Q3-semver-and-ci** — SemVer и CI-контроль контрактов
 - validate_contracts / graph_sanity / decision_log_audit
 - diff-анализ контрактов
 - политика: breaking → major bump + approval
 
-2) **INIT-2026Q3-codex-integration** — Интеграция с Codex-пайплайном (**Низкий**)
+2) **INIT-2026Q3-codex-integration** — Интеграция с Codex-пайплайном
 - workpacks + PLAN/APPLY
 - codex-review-gate
 - шаблоны типовых пакетов изменений (LLM, tests, CI)
 
-3) **INIT-2026Q3-agent-registry-integration** — Интеграция агентной платформы v0 (**Низкий**)
+3) **INIT-2026Q3-agent-registry-integration** — Интеграция агентной платформы v0
 - agent_registry + runner для внутренних baseline-агентов
 - ADR-005 с границами и рисками
 - включение/отключение через конфиг/флаги
@@ -92,9 +43,19 @@
 
 ---
 
+## NEXT — TBD
+
+Кандидаты определяются по итогам 2026Q3.
+
+---
+
+## LATER — TBD
+
+---
+
 ## Prioritization principles
 
-- Сначала измеримость и безопасность, потом “умность”
+- Сначала измеримость и безопасность, потом "умность"
 - Любая LLM-фича должна иметь deterministic fallback и kill-switch
 - Контракты и DecisionDTO — стабильная граница ответственности
-- Расширяемость = через инициативы, ADR и совместимость, а не через “быстрые хаки”
+- Расширяемость = через инициативы, ADR и совместимость, а не через "быстрые хаки"
