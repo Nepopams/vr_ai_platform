@@ -11,9 +11,10 @@
 |-------|--------|---------|---------|-------|-------------|
 | 2026Q1 | S01 | 1 | 4/4 | 0→109 | shadow-router, assist-mode |
 | 2026Q2 | S02-S04 | 3 | 9/9 | 109→202 | partial-trust, multi-entity-extraction, improved-clarify |
-| **Total** | | **4** | **13/13** | **202** | **5 done** |
+| 2026Q3 | — | — | — | — | codex-integration (organically) |
+| **Total** | | **4** | **13/13** | **202** | **6 done** |
 
-Детали закрытых инициатив: `docs/planning/initiatives/INIT-2026Q1-*.md`, `INIT-2026Q2-*.md`.
+Детали закрытых инициатив: `docs/planning/initiatives/INIT-2026Q1-*.md`, `INIT-2026Q2-*.md`, `INIT-2026Q3-codex-integration.md`.
 Ретроспективы: `docs/planning/sprints/S01..S04/retro.md`.
 
 ---
@@ -27,12 +28,7 @@
 - diff-анализ контрактов
 - политика: breaking → major bump + approval
 
-2) **INIT-2026Q3-codex-integration** — Интеграция с Codex-пайплайном
-- workpacks + PLAN/APPLY
-- codex-review-gate
-- шаблоны типовых пакетов изменений (LLM, tests, CI)
-
-3) **INIT-2026Q3-agent-registry-integration** — Интеграция агентной платформы v0
+2) **INIT-2026Q3-agent-registry-integration** — Интеграция агентной платформы v0
 - agent_registry + runner для внутренних baseline-агентов
 - ADR-005 с границами и рисками
 - включение/отключение через конфиг/флаги

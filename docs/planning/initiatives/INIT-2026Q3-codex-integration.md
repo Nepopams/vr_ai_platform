@@ -2,7 +2,7 @@
 
 **Приоритет:** Низкий  
 **Период:** 2026Q3  
-**Статус:** Proposed  
+**Статус:** Done (organically — pipeline operational since S01, 13 stories delivered)
 **Owner:** TBD
 
 ## Контекст
