@@ -228,10 +228,15 @@ def _annotate_registry_capabilities(intent: str) -> Dict[str, Any]:
 def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
     import time
 
+    from app.logging.fallback_metrics_log import (
+        append_fallback_metrics_log,
+        is_fallback_metrics_log_enabled,
+    )
     from app.logging.pipeline_latency_log import (
         append_pipeline_latency_log,
         is_pipeline_latency_log_enabled,
     )
+    from llm_policy.config import is_llm_policy_enabled
 
     t_start = time.monotonic()
 
@@ -344,10 +349,10 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
 
     total_ms = (time.monotonic() - t_start) * 1000
 
+    llm_on = is_llm_policy_enabled()
+
     # Emit latency record
     if is_pipeline_latency_log_enabled():
-        from llm_policy.config import is_llm_policy_enabled
-
         append_pipeline_latency_log(
             {
                 "command_id": command.get("command_id"),
@@ -360,7 +365,23 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
                     "core_logic_ms": round(core_logic_ms, 3),
                     "validate_decision_ms": round(validate_decision_ms, 3),
                 },
-                "llm_enabled": is_llm_policy_enabled(),
+                "llm_enabled": llm_on,
+            }
+        )
+
+    # Emit fallback metrics record
+    if is_fallback_metrics_log_enabled():
+        append_fallback_metrics_log(
+            {
+                "command_id": command.get("command_id"),
+                "trace_id": decision.get("trace_id"),
+                "intent": intent,
+                "decision_action": decision.get("action"),
+                "llm_outcome": "skipped" if not llm_on else "deterministic_only",
+                "fallback_reason": "policy_disabled" if not llm_on else None,
+                "deterministic_used": True,
+                "llm_latency_ms": None,
+                "components": {},
             }
         )
 
