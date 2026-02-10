@@ -22,11 +22,8 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
 
-      - name: Validate contracts
-        run: python -m skills.contract_checker
-
       - name: Check schema version
         run: python -m skills.schema_bump check
 
-      - name: Graph sanity
-        run: python -m skills.graph_sanity
+      - name: Release sanity
+        run: python3 skills/release-sanity/scripts/release_sanity.py

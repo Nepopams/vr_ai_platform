@@ -65,3 +65,22 @@ def test_schema_bump_breaking_changes():
     )
     breaking = script["find_breaking_changes"](old_schema, new_schema)
     assert breaking == []
+
+
+def test_release_sanity_runs():
+    script = load_script(
+        BASE_DIR / "skills" / "release-sanity" / "scripts" / "release_sanity.py"
+    )
+    failures = script["run_checks"]()
+    assert failures == []
+
+
+def test_release_sanity_includes_decision_log_audit():
+    script = load_script(
+        BASE_DIR / "skills" / "release-sanity" / "scripts" / "release_sanity.py"
+    )
+    checks = script["CHECKS"]
+    check_names = [name for name, _ in checks]
+    assert "contract-checker" in check_names
+    assert "decision-log-audit" in check_names
+    assert "graph-sanity" in check_names
