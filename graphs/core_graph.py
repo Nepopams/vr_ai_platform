@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+import time
 from jsonschema import validate
 import logging
 
@@ -225,12 +226,34 @@ def _annotate_registry_capabilities(intent: str) -> Dict[str, Any]:
 
 
 def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
+    import time
+
+    from app.logging.pipeline_latency_log import (
+        append_pipeline_latency_log,
+        is_pipeline_latency_log_enabled,
+    )
+
+    t_start = time.monotonic()
+
+    # Step 1: validate command
+    t0 = time.monotonic()
     command_schema = load_schema(COMMAND_SCHEMA_PATH)
     validate(instance=command, schema=command_schema)
+    validate_command_ms = (time.monotonic() - t0) * 1000
 
+    # Step 2: detect intent
+    t0 = time.monotonic()
     text = command.get("text", "").strip()
     intent = detect_intent(text)
+    detect_intent_ms = (time.monotonic() - t0) * 1000
+
+    # Step 3: registry annotation
+    t0 = time.monotonic()
     registry_snapshot = _annotate_registry_capabilities(intent)
+    registry_ms = (time.monotonic() - t0) * 1000
+
+    # Step 4: core logic
+    t0 = time.monotonic()
     capabilities = set(command.get("capabilities", []))
 
     if "start_job" not in capabilities:
@@ -311,9 +334,35 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
             question="Уточните, что нужно сделать: задача или покупка?",
             explanation="Интент не распознан.",
         )
+    core_logic_ms = (time.monotonic() - t0) * 1000
 
+    # Step 5: validate decision
+    t0 = time.monotonic()
     decision_schema = load_schema(DECISION_SCHEMA_PATH)
     validate(instance=decision, schema=decision_schema)
+    validate_decision_ms = (time.monotonic() - t0) * 1000
+
+    total_ms = (time.monotonic() - t_start) * 1000
+
+    # Emit latency record
+    if is_pipeline_latency_log_enabled():
+        from llm_policy.config import is_llm_policy_enabled
+
+        append_pipeline_latency_log(
+            {
+                "command_id": command.get("command_id"),
+                "trace_id": decision.get("trace_id"),
+                "total_ms": round(total_ms, 3),
+                "steps": {
+                    "validate_command_ms": round(validate_command_ms, 3),
+                    "detect_intent_ms": round(detect_intent_ms, 3),
+                    "registry_ms": round(registry_ms, 3),
+                    "core_logic_ms": round(core_logic_ms, 3),
+                    "validate_decision_ms": round(validate_decision_ms, 3),
+                },
+                "llm_enabled": is_llm_policy_enabled(),
+            }
+        )
 
     return decision
 
