@@ -11,37 +11,26 @@
 |-------|--------|---------|---------|-------|-------------|
 | 2026Q1 | S01 | 1 | 4/4 | 0→109 | shadow-router, assist-mode |
 | 2026Q2 | S02-S04 | 3 | 9/9 | 109→202 | partial-trust, multi-entity-extraction, improved-clarify |
-| 2026Q3 | — | — | — | — | codex-integration (organically) |
-| **Total** | | **4** | **13/13** | **202** | **6 done** |
+| 2026Q3 | S05 | 1 | 6/6 | 202→228 | semver-and-ci, agent-registry-integration, codex-integration (organically) |
+| **Total** | | **5** | **19/19** | **228** | **8 done** |
 
-Детали закрытых инициатив: `docs/planning/initiatives/INIT-2026Q1-*.md`, `INIT-2026Q2-*.md`, `INIT-2026Q3-codex-integration.md`.
-Ретроспективы: `docs/planning/sprints/S01..S04/retro.md`.
+Детали закрытых инициатив: `docs/planning/initiatives/INIT-*.md`.
+Ретроспективы: `docs/planning/sprints/S01..S05/retro.md`.
 
 ---
 
-## NOW (2026Q3) — процесс, контракты и расширяемость
+## All Roadmap Phases Complete
 
-Цель фазы: закрепить дисциплину разработки и подготовиться к расширению.
+Все инициативы из NOW (2026Q1), NEXT (2026Q2) и LATER (2026Q3) закрыты.
+19 историй за 5 спринтов, 0 carry-overs, 228 тестов.
 
-1) **INIT-2026Q3-semver-and-ci** — SemVer и CI-контроль контрактов
-- validate_contracts / graph_sanity / decision_log_audit
-- diff-анализ контрактов
-- политика: breaking → major bump + approval
-
-2) **INIT-2026Q3-agent-registry-integration** — Интеграция агентной платформы v0
-- agent_registry + runner для внутренних baseline-агентов
-- ADR-005 с границами и рисками
-- включение/отключение через конфиг/флаги
-
-**Gates:**
-- CI защищает contracts и decision flow
-- Любые расширения через ADR и совместимость
+Следующие шаги определяются PO на основе новых продуктовых целей.
 
 ---
 
 ## NEXT — TBD
 
-Кандидаты определяются по итогам 2026Q3.
+Кандидаты определяются PO.
 
 ---
 
