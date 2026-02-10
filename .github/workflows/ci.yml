@@ -22,6 +22,16 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
 
+      - name: Quality evaluation
+        run: python3 skills/quality-eval/scripts/evaluate_golden.py > quality_eval_report.json
+
+      - name: Upload quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-eval-report
+          path: quality_eval_report.json
+
       - name: Check schema version
         run: python -m skills.schema_bump check
 
