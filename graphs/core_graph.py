@@ -10,6 +10,9 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from jsonschema import validate
+import logging
+
+_logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = BASE_DIR / "contracts" / "schemas"
@@ -182,12 +185,52 @@ def build_start_job_decision(
     }
 
 
+def _annotate_registry_capabilities(intent: str) -> Dict[str, Any]:
+    """Read-only probe: query registry for agents matching intent.
+
+    Returns a registry_snapshot dict for logging. Never raises.
+    """
+    try:
+        from agent_registry.config import is_agent_registry_core_enabled
+
+        if not is_agent_registry_core_enabled():
+            return {}
+
+        from agent_registry.v0_loader import AgentRegistryV0Loader, load_capability_catalog
+        from agent_registry.capabilities_lookup import CapabilitiesLookup
+
+        registry = AgentRegistryV0Loader.load()
+        catalog = load_capability_catalog()
+        lookup = CapabilitiesLookup(registry, catalog)
+
+        agents_shadow = lookup.find_agents(intent, "shadow")
+        agents_assist = lookup.find_agents(intent, "assist")
+        all_agents = agents_shadow + agents_assist
+
+        snapshot: Dict[str, Any] = {
+            "intent": intent,
+            "available_agents": [
+                {"agent_id": a.agent_id, "mode": a.mode}
+                for a in all_agents
+            ],
+            "any_enabled": len(all_agents) > 0,
+        }
+
+        _logger.info("registry_snapshot: %s", snapshot)
+        return snapshot
+
+    except Exception as exc:
+        _logger.warning("registry annotation failed: %s", exc)
+        return {"intent": intent, "error": str(exc), "any_enabled": False}
+
+
 def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
     command_schema = load_schema(COMMAND_SCHEMA_PATH)
     validate(instance=command, schema=command_schema)
 
     text = command.get("text", "").strip()
     intent = detect_intent(text)
+    registry_snapshot = _annotate_registry_capabilities(intent)
     capabilities = set(command.get("capabilities", []))
 
     if "start_job" not in capabilities:
