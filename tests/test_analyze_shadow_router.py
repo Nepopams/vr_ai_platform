@@ -258,7 +258,7 @@ def test_golden_dataset_manifest_schema():
 
     data = json.loads(golden_path.read_text(encoding="utf-8"))
     assert isinstance(data, list)
-    assert len(data) == 14, f"Expected 14 entries, got {len(data)}"
+    assert len(data) >= 20, f"Expected >= 20 entries, got {len(data)}"
 
     required_fields = {"command_id", "expected_intent", "expected_entity_keys"}
     for entry in data:

@@ -1,0 +1,13 @@
+{
+  "command_id": "cmd-gd-020",
+  "user_id": "user-220",
+  "timestamp": "2026-02-10T10:03:00+00:00",
+  "text": "Да",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-220",
+      "members": [{"user_id": "user-220", "display_name": "Коля"}]
+    }
+  }
+}

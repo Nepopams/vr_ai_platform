@@ -1,0 +1,15 @@
+{
+  "command_id": "cmd-gd-018",
+  "user_id": "user-218",
+  "timestamp": "2026-02-10T10:01:00+00:00",
+  "text": "Купии малако",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-218",
+      "members": [{"user_id": "user-218", "display_name": "Петя"}],
+      "shopping_lists": [{"list_id": "list-1", "name": "Продукты"}]
+    },
+    "defaults": {"default_list_id": "list-1"}
+  }
+}

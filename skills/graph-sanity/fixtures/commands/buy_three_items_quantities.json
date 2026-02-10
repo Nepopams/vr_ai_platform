@@ -1,0 +1,15 @@
+{
+  "command_id": "cmd-gd-017",
+  "user_id": "user-217",
+  "timestamp": "2026-02-10T10:00:00+00:00",
+  "text": "Купи 2 литра молока, хлеб и масло",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-217",
+      "members": [{"user_id": "user-217", "display_name": "Анна"}],
+      "shopping_lists": [{"list_id": "list-1", "name": "Продукты"}]
+    },
+    "defaults": {"default_list_id": "list-1"}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "command_id": "cmd-gd-022",
+  "user_id": "user-222",
+  "timestamp": "2026-02-10T10:05:00+00:00",
+  "text": "Пожалуйста, помоги убрать комнату",
+  "capabilities": ["start_job", "propose_create_task", "propose_add_shopping_item", "clarify"],
+  "context": {
+    "household": {
+      "household_id": "house-222",
+      "members": [{"user_id": "user-222", "display_name": "Маша"}]
+    }
+  }
+}

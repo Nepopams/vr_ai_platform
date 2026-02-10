@@ -5,6 +5,8 @@
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
     "expected_item_count": 1,
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "easy",
     "notes": "Купи молоко — keyword 'куп'"
   },
   {
@@ -14,6 +16,8 @@
     "expected_entity_keys": ["item"],
     "expected_item_count": 2,
     "expected_item_names": ["хлеб", "яйца"],
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
     "notes": "Купить хлеб и яйца — keyword 'куп', multi-item conjunction"
   },
   {
@@ -21,6 +25,8 @@
     "fixture_file": "clean_bathroom.json",
     "expected_intent": "create_task",
     "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "easy",
     "notes": "Убраться в ванной — keyword 'убраться'"
   },
   {
@@ -28,6 +34,8 @@
     "fixture_file": "fix_faucet.json",
     "expected_intent": "create_task",
     "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "easy",
     "notes": "Починить кран на кухне — keyword 'починить'"
   },
   {
@@ -35,6 +43,8 @@
     "fixture_file": "empty_text.json",
     "expected_intent": "clarify_needed",
     "expected_entity_keys": [],
+    "expected_action": "clarify",
+    "difficulty": "easy",
     "notes": "Whitespace-only text — no keywords"
   },
   {
@@ -42,6 +52,8 @@
     "fixture_file": "unknown_intent.json",
     "expected_intent": "clarify_needed",
     "expected_entity_keys": [],
+    "expected_action": "clarify",
+    "difficulty": "hard",
     "notes": "Что-то непонятное про погоду — no keywords match"
   },
   {
@@ -49,6 +61,8 @@
     "fixture_file": "minimal_context.json",
     "expected_intent": "create_task",
     "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "medium",
     "notes": "Сделай что-нибудь полезное — keyword 'сделай'"
   },
   {
@@ -57,6 +71,8 @@
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
     "expected_item_count": 1,
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "easy",
     "notes": "Купи бананы — keyword 'куп', no shopping list in context"
   },
   {
@@ -64,6 +80,8 @@
     "fixture_file": "task_no_zones.json",
     "expected_intent": "create_task",
     "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "easy",
     "notes": "Нужно помыть окна — keyword 'нужно'"
   },
   {
@@ -73,6 +91,8 @@
     "expected_entity_keys": ["item"],
     "expected_item_count": 2,
     "expected_item_names": ["apples", "oranges"],
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
     "notes": "Buy apples and oranges — keyword 'buy', multi-item conjunction (English)"
   },
   {
@@ -81,6 +101,8 @@
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
     "expected_item_count": 1,
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
     "notes": "Купи молоко и убери кухню — keyword 'куп' wins, multi-intent not split"
   },
   {
@@ -89,6 +111,8 @@
     "expected_intent": "add_shopping_item",
     "expected_entity_keys": ["item"],
     "expected_item_count": 1,
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
     "notes": "Добавь сахар в список покупок — 'куп' substring in 'покупок', trailing context removed"
   },
   {
@@ -98,6 +122,8 @@
     "expected_entity_keys": ["item"],
     "expected_item_count": 2,
     "expected_item_names": ["яблоки", "молоко"],
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
     "notes": "Купи яблоки и молоко — keyword 'куп', multi-item conjunction"
   },
   {
@@ -105,6 +131,85 @@
     "fixture_file": "weekly_chores.json",
     "expected_intent": "create_task",
     "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "easy",
     "notes": "Нужно убрать кухню и составить план — keyword 'нужно'"
+  },
+  {
+    "command_id": "cmd-wp000-015",
+    "fixture_file": "clarify_partial_shopping.json",
+    "expected_intent": "clarify_needed",
+    "expected_entity_keys": [],
+    "expected_action": "clarify",
+    "difficulty": "medium",
+    "notes": "Добавь... что-то — incomplete shopping request, existing fixture"
+  },
+  {
+    "command_id": "cmd-wp000-016",
+    "fixture_file": "clarify_ambiguous_intent.json",
+    "expected_intent": "clarify_needed",
+    "expected_entity_keys": [],
+    "expected_action": "clarify",
+    "difficulty": "hard",
+    "notes": "Ambiguous intent — could be shopping or task, existing fixture"
+  },
+  {
+    "command_id": "cmd-gd-017",
+    "fixture_file": "buy_three_items_quantities.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "expected_item_count": 3,
+    "expected_item_names": ["молоко", "хлеб", "масло"],
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
+    "notes": "Купи 2 литра молока, хлеб и масло — multi-item with quantity"
+  },
+  {
+    "command_id": "cmd-gd-018",
+    "fixture_file": "typo_shopping.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "expected_item_count": 1,
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "hard",
+    "notes": "Купии малако — typo in keyword and item name"
+  },
+  {
+    "command_id": "cmd-gd-019",
+    "fixture_file": "mixed_lang_task.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "hard",
+    "notes": "Clean the кухня please — mixed Russian/English"
+  },
+  {
+    "command_id": "cmd-gd-020",
+    "fixture_file": "single_word_clarify.json",
+    "expected_intent": "clarify_needed",
+    "expected_entity_keys": [],
+    "expected_action": "clarify",
+    "difficulty": "easy",
+    "notes": "Да — single word, no intent keywords"
+  },
+  {
+    "command_id": "cmd-gd-021",
+    "fixture_file": "long_shopping_list.json",
+    "expected_intent": "add_shopping_item",
+    "expected_entity_keys": ["item"],
+    "expected_item_count": 5,
+    "expected_item_names": ["молоко", "хлеб", "масло", "сыр", "яйца"],
+    "expected_action": "propose_add_shopping_item",
+    "difficulty": "medium",
+    "notes": "Купи молоко, хлеб, масло, сыр и яйца — 5 items"
+  },
+  {
+    "command_id": "cmd-gd-022",
+    "fixture_file": "polite_task.json",
+    "expected_intent": "create_task",
+    "expected_entity_keys": [],
+    "expected_action": "propose_create_task",
+    "difficulty": "easy",
+    "notes": "Пожалуйста, помоги убрать комнату — polite form with 'убрать'"
   }
 ]
