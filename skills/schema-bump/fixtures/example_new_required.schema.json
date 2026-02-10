@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Example",
+  "type": "object",
+  "required": ["id", "status", "name"],
+  "properties": {
+    "id": {"type": "string"},
+    "status": {"type": "string"},
+    "name": {"type": "string"}
+  },
+  "additionalProperties": false
+}

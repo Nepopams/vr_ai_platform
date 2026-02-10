@@ -84,3 +84,61 @@ def test_release_sanity_includes_decision_log_audit():
     assert "contract-checker" in check_names
     assert "decision-log-audit" in check_names
     assert "graph-sanity" in check_names
+
+
+def test_detect_field_deletion():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    old = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example.schema.json"
+    new = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example_deleted_field.schema.json"
+    breaking = script["find_breaking_changes"](old, new)
+    assert any("Removed property: status" in b for b in breaking)
+
+
+def test_detect_type_change():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    old = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example.schema.json"
+    new = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example_type_change.schema.json"
+    breaking = script["find_breaking_changes"](old, new)
+    assert any("Type changed for property 'status': string -> object" in b for b in breaking)
+
+
+def test_detect_new_required_field():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    old = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example.schema.json"
+    new = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example_new_required.schema.json"
+    breaking = script["find_breaking_changes"](old, new)
+    assert any("New required field: name" in b for b in breaking)
+
+
+def test_detect_removed_required_backward_compat():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    old = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example.schema.json"
+    new = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example_deleted_field.schema.json"
+    breaking = script["find_breaking_changes"](old, new)
+    assert any("Removed required field: status" in b for b in breaking)
+
+
+def test_non_breaking_optional_addition():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    old = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example.schema.json"
+    new = BASE_DIR / "skills" / "schema-bump" / "fixtures" / "example_optional_added.schema.json"
+    breaking = script["find_breaking_changes"](old, new)
+    assert breaking == []
+
+
+def test_real_schemas_against_baseline_no_breaking():
+    script = load_script(
+        BASE_DIR / "skills" / "schema-bump" / "scripts" / "check_breaking_changes.py"
+    )
+    breaking = script["compare_all_schemas"]()
+    assert breaking == []
