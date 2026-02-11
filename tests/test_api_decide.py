@@ -24,7 +24,7 @@ def test_decide_returns_valid_decision(monkeypatch, tmp_path):
     schema = json.loads(DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
     client = TestClient(create_app())
 
-    response = client.post("/decide", json=command)
+    response = client.post("/v1/decide", json=command)
     assert response.status_code == 200
     decision = response.json()
     validate(instance=decision, schema=schema)
@@ -33,7 +33,7 @@ def test_decide_returns_valid_decision(monkeypatch, tmp_path):
 def test_decide_rejects_invalid_command(monkeypatch, tmp_path):
     monkeypatch.setenv("DECISION_LOG_PATH", str(tmp_path / "decisions.jsonl"))
     client = TestClient(create_app())
-    response = client.post("/decide", json={"command_id": "cmd-1"})
+    response = client.post("/v1/decide", json={"command_id": "cmd-1"})
     assert response.status_code == 422
     payload = response.json()
     assert "detail" in payload

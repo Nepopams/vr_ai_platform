@@ -31,7 +31,7 @@ def main() -> int:
         schema = json.loads(DECISION_SCHEMA_PATH.read_text(encoding="utf-8"))
         client = TestClient(create_app())
 
-        response = client.post("/decide", json=command)
+        response = client.post("/v1/decide", json=command)
         if response.status_code != 200:
             print(f"API sanity failed: {response.status_code} {response.text}")
             return 1
