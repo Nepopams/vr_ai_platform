@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, status
+
+from app.models.api_models import CommandRequest, DecisionResponse
 from app.services.decision_service import (
     CommandValidationError,
     decide,
-    format_validation_error,
 )
 
 
@@ -17,24 +17,15 @@ router = APIRouter()
 
 
 @router.post("/decide")
-async def decide_route(request: Request) -> Dict[str, Any]:
+async def decide_route(command: CommandRequest) -> DecisionResponse:
     try:
-        payload = await request.json()
-    except Exception:
+        decision = decide(command.model_dump(exclude_none=True))
+    except CommandValidationError:
+        # Safety net: Pydantic already validates input, but jsonschema
+        # inside decide() may catch edge cases. Re-raise as 400.
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "Invalid JSON body."},
-        )
-
-    try:
-        decision = decide(payload)
-    except CommandValidationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "error": "CommandDTO validation failed.",
-                "violations": [format_validation_error(exc.error)],
-            },
+            detail={"error": "CommandDTO validation failed (jsonschema)."},
         )
     except Exception:
         trace_id = f"trace-{uuid4().hex}"
@@ -43,4 +34,4 @@ async def decide_route(request: Request) -> Dict[str, Any]:
             detail={"error": "Internal error.", "trace_id": trace_id},
         )
 
-    return decision
+    return DecisionResponse.model_validate(decision)

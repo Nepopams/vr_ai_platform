@@ -9,6 +9,7 @@ dependencies = [
   "httpx",
   "jsonschema",
   "openai",
+  "pydantic",
 ]
 
 [project.optional-dependencies]

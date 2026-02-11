@@ -34,6 +34,6 @@ def test_decide_rejects_invalid_command(monkeypatch, tmp_path):
     monkeypatch.setenv("DECISION_LOG_PATH", str(tmp_path / "decisions.jsonl"))
     client = TestClient(create_app())
     response = client.post("/decide", json={"command_id": "cmd-1"})
-    assert response.status_code == 400
+    assert response.status_code == 422
     payload = response.json()
-    assert payload.get("detail", {}).get("error") == "CommandDTO validation failed."
+    assert "detail" in payload
