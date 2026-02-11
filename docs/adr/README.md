@@ -7,3 +7,4 @@
 - ADR-003 — реестр политик моделей LLM и эскалация.
 - ADR-004 — Partial Trust corridor как контролируемое исключение (rollback/observability).
 - ADR-005 — Internal Agent Contract v0 (ABI, формат ДОРА): registry/capability/runner/validation/logging стандарт.
+- ADR-007 — стратегия версионирования API: URL path prefix (/v1/), backward-compat /decide, API-Version header.

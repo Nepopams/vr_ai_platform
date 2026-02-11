@@ -30,6 +30,7 @@ This index tracks all ADRs in the project. Update this file when creating/supers
 | ADR-004-P | Partial Trust corridor | accepted | 2026-02-08 | [Link](../adr/ADR-004-partial-trust-corridor.md) |
 | ADR-005-P | Internal Agent Contract v0 (ABI) | accepted | 2026-02-09 | [Link](../adr/ADR-005-internal-agent-contract-v0.md) |
 | ADR-006-P | Multi-item internal model & quantity type | accepted | 2026-02-08 | [Link](../adr/ADR-006-multi-item-internal-model.md) |
+| ADR-007-P | API Versioning Strategy | proposed | 2026-02-11 | [Link](../adr/ADR-007-api-versioning.md) |
 
 ## Template
 
