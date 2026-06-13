@@ -309,6 +309,35 @@ def _call_llm(caller: LlmCaller, spec: CallSpec, prompt: str) -> tuple[str, floa
 
 
 def _parse_json(raw: str) -> Mapping[str, object] | None:
+    direct = _load_json_object(raw)
+    if direct is not None:
+        return direct
+    if _is_valid_non_object_json(raw):
+        return None
+
+    stripped = raw.strip()
+    if stripped != raw:
+        direct = _load_json_object(stripped)
+        if direct is not None:
+            return direct
+        if _is_valid_non_object_json(stripped):
+            return None
+
+    fenced = _strip_markdown_fence(stripped)
+    if fenced is not None:
+        direct = _load_json_object(fenced)
+        if direct is not None:
+            return direct
+        if _is_valid_non_object_json(fenced):
+            return None
+
+    candidates = _extract_json_object_candidates(stripped)
+    if len(candidates) != 1:
+        return None
+    return _load_json_object(candidates[0])
+
+
+def _load_json_object(raw: str) -> Mapping[str, object] | None:
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
@@ -316,6 +345,79 @@ def _parse_json(raw: str) -> Mapping[str, object] | None:
     if not isinstance(parsed, dict):
         return None
     return parsed
+
+
+def _is_valid_non_object_json(raw: str) -> bool:
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return False
+    return not isinstance(parsed, dict)
+
+
+def _strip_markdown_fence(raw: str) -> str | None:
+    lines = raw.splitlines()
+    if len(lines) < 3:
+        return None
+    first = lines[0].strip().lower()
+    last = lines[-1].strip()
+    if not first.startswith("```") or last != "```":
+        return None
+    language = first[3:].strip()
+    if language not in {"", "json"}:
+        return None
+    return "\n".join(lines[1:-1]).strip()
+
+
+def _extract_json_object_candidates(raw: str) -> list[str]:
+    candidates: list[str] = []
+    start: int | None = None
+    depth = 0
+    in_string = False
+    escaped = False
+
+    for index, char in enumerate(raw):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+            continue
+        if char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+            continue
+        if char == "}" and depth > 0:
+            depth -= 1
+            if depth == 0 and start is not None:
+                if not _is_array_embedded_object(raw, start, index):
+                    candidates.append(raw[start : index + 1])
+                start = None
+
+    if depth != 0:
+        return []
+    return candidates
+
+
+def _is_array_embedded_object(raw: str, start: int, end: int) -> bool:
+    previous_char = _nearest_non_whitespace(raw, start - 1, step=-1)
+    next_char = _nearest_non_whitespace(raw, end + 1, step=1)
+    return previous_char == "[" or next_char == "]"
+
+
+def _nearest_non_whitespace(raw: str, index: int, *, step: int) -> str | None:
+    while 0 <= index < len(raw):
+        if not raw[index].isspace():
+            return raw[index]
+        index += step
+    return None
 
 
 def _validate_schema(payload: Mapping[str, object], schema: Mapping[str, object]) -> bool:

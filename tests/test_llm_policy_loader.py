@@ -59,11 +59,11 @@ def test_load_cloudru_policy() -> None:
     assert cheap.model == "openai/gpt-oss-20b"
     assert cheap.temperature == 0.1
     assert cheap.max_tokens == 512
-    assert cheap.timeout_ms == 8000
+    assert cheap.timeout_ms == 30000
     assert cheap.base_url is None
     assert reliable.provider == "openai_compatible"
     assert reliable.model == "openai/gpt-oss-20b"
-    assert reliable.timeout_ms == 10000
+    assert reliable.timeout_ms == 45000
 
 
 def test_cloudru_policy_has_no_placeholders_or_keys() -> None:

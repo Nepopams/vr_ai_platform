@@ -38,6 +38,8 @@ Run offline policy/bootstrap checks first:
 ```bash
 python3 -m pytest tests/test_llm_policy_loader.py
 python3 -m pytest tests/test_llm_bootstrap.py
+python3 -m pytest tests/test_llm_runtime.py
+python3 -m pytest tests/test_llm_tasks.py
 ```
 
 Optional direct LLM smoke is manual-only on UAT with a real key. Use the
@@ -58,3 +60,15 @@ curl http://127.0.0.1:8000/ready
 - This is not a UAT blocker for the current shopping extraction policy.
 - If fine tuning of request parameters is needed, extend `CallSpec`, loader
   allowed keys, and `HttpLlmCaller._build_body()` in a separate task.
+
+## Troubleshooting
+
+- `timeout` on first smoke: check policy timeout values. Current Cloud.ru UAT
+  defaults are `30000` ms for `cheap` and `45000` ms for `reliable`.
+- `invalid_json`: cloud/open-weight models may return reasoning, prose, or
+  markdown. Runtime now performs conservative JSON object extraction, while the
+  HTTP caller and shopping prompt request JSON-only output.
+- Numeric `quantity`: internal LLM output may contain numbers such as
+  `"quantity": 2`; AI Platform normalizes quantity to a string before the
+  DecisionDTO pipeline.
+- ASR remains external preprocessing: audio -> ASR -> text -> `/v1/decide`.

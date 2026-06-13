@@ -67,6 +67,10 @@ Cloud.ru is configured through the same OpenAI-compatible HTTP caller. Keep
 `LLM_API_KEY` and all other secrets only in env or a secret manager; do not put
 secrets in policy files or committed `.env` files.
 
+The HTTP caller sends a JSON-only system instruction for LLM policy calls. The
+runtime still validates every parsed response against the task schema and falls
+back deterministically on invalid output.
+
 ## Enable/Disable Flow
 
 ### Enabling LLM
