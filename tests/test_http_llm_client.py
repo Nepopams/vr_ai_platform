@@ -89,6 +89,39 @@ def test_sends_correct_request_openai_compatible() -> None:
         assert "OpenAI-Project" not in headers
 
 
+def test_sends_cloudru_request_to_chat_completions() -> None:
+    """Cloud.ru base_url is OpenAI-compatible and receives chat/completions requests."""
+    spec = _make_spec(
+        provider="openai_compatible",
+        model="openai/gpt-oss-20b",
+        temperature=0.1,
+        max_tokens=512,
+        timeout_ms=8000,
+        base_url="https://foundation-models.api.cloud.ru/v1",
+        project=None,
+    )
+    caller = HttpLlmCaller(api_key="test-key")
+
+    with patch("llm_policy.http_caller.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.post.return_value = _mock_success_response()
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        caller(spec, "test prompt")
+
+        call_args = mock_client.post.call_args
+        assert (
+            call_args[0][0]
+            == "https://foundation-models.api.cloud.ru/v1/chat/completions"
+        )
+        body = call_args[1]["json"]
+        assert body["model"] == "openai/gpt-oss-20b"
+        assert body["messages"] == [{"role": "user", "content": "test prompt"}]
+        assert body["temperature"] == 0.1
+        assert body["max_tokens"] == 512
+
+
 def test_returns_response_text() -> None:
     """AC-1: Extracts content from OpenAI-format response."""
     spec = _make_spec()

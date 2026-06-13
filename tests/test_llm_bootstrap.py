@@ -33,6 +33,23 @@ def test_bootstrap_registers_caller_with_all_vars(monkeypatch) -> None:
     assert callable(caller), "Caller should be callable"
 
 
+def test_bootstrap_registers_caller_for_cloudru_env(monkeypatch) -> None:
+    """Cloud.ru UAT env uses the same OpenAI-compatible caller path."""
+    policy_path = BASE_DIR / "llm_policy" / "llm-policy.cloudru.yaml"
+    monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
+    monkeypatch.setenv("LLM_POLICY_PATH", str(policy_path))
+    monkeypatch.setenv("LLM_POLICY_PROFILE", "cheap")
+    monkeypatch.setenv("LLM_POLICY_ALLOW_PLACEHOLDERS", "false")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-abc123")
+    monkeypatch.setenv("LLM_BASE_URL", "https://foundation-models.api.cloud.ru/v1")
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.setenv("LLM_MODEL", "openai/gpt-oss-20b")
+
+    bootstrap_llm_caller()
+
+    assert get_llm_caller() is not None
+
+
 def test_bootstrap_skips_without_api_key(monkeypatch) -> None:
     """AC-2: Caller not registered when API key missing."""
     monkeypatch.setenv("LLM_POLICY_ENABLED", "true")
@@ -69,3 +86,16 @@ def test_bootstrap_logs_warning_on_missing_vars(monkeypatch, caplog) -> None:
     assert any(
         "LLM_API_KEY not set" in record.message for record in caplog.records
     ), "Expected warning about missing LLM_API_KEY"
+
+
+def test_create_app_runs_bootstrap_path_when_disabled(monkeypatch) -> None:
+    """App startup path calls bootstrap without registering a caller when disabled."""
+    from app.main import create_app
+
+    monkeypatch.setenv("LLM_POLICY_ENABLED", "false")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+
+    app = create_app()
+
+    assert app.title == "HomeTask Decision API"
+    assert get_llm_caller() is None
