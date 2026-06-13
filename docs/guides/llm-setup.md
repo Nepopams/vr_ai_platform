@@ -29,6 +29,9 @@ This guide covers how to configure and run the AI Platform with a real LLM provi
    LLM_BASE_URL=https://api.openai.com/v1
    ```
 
+   Use the provider base URL without `/chat/completions`; `HttpLlmCaller`
+   appends `/chat/completions` when building the request.
+
 4. Enable LLM policy:
 
    ```
@@ -54,6 +57,15 @@ This guide covers how to configure and run the AI Platform with a real LLM provi
 | `LLM_PROVIDER` | `openai` | Provider name (`openai`, `yandex`). |
 | `LLM_MODEL` | `gpt-4o-mini` | Model identifier. |
 | `LLM_TEMPERATURE` | `0.1` | Sampling temperature. |
+
+## Cloud.ru
+
+For Cloud.ru Foundation Models UAT setup, see
+`docs/guides/cloudru-llm-setup.md`.
+
+Cloud.ru is configured through the same OpenAI-compatible HTTP caller. Keep
+`LLM_API_KEY` and all other secrets only in env or a secret manager; do not put
+secrets in policy files or committed `.env` files.
 
 ## Enable/Disable Flow
 

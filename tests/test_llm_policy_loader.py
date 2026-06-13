@@ -21,6 +21,16 @@ def _load_policy_payload() -> dict:
     return policy_loader._load_policy_payload(policy_path)
 
 
+def _contains_placeholder(value: object) -> bool:
+    if isinstance(value, str):
+        return "${" in value or ("<" in value and ">" in value)
+    if isinstance(value, dict):
+        return any(_contains_placeholder(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_placeholder(item) for item in value)
+    return False
+
+
 def test_load_valid_policy() -> None:
     from llm_policy.loader import LlmPolicyLoader
 
@@ -28,6 +38,43 @@ def test_load_valid_policy() -> None:
 
     assert policy is not None
     assert policy.compat_adr == "ADR-003"
+
+
+def test_load_cloudru_policy() -> None:
+    from llm_policy.loader import LlmPolicyLoader
+
+    policy_path = BASE_DIR / "llm_policy" / "llm-policy.cloudru.yaml"
+    policy = LlmPolicyLoader.load(
+        enabled=True,
+        path_override=str(policy_path),
+        allow_placeholders=False,
+    )
+
+    assert policy is not None
+    assert policy.profiles == ("cheap", "reliable")
+    assert "shopping_extraction" in policy.routing
+    cheap = policy.routing["shopping_extraction"]["cheap"]
+    reliable = policy.routing["shopping_extraction"]["reliable"]
+    assert cheap.provider == "openai_compatible"
+    assert cheap.model == "openai/gpt-oss-20b"
+    assert cheap.temperature == 0.1
+    assert cheap.max_tokens == 512
+    assert cheap.timeout_ms == 8000
+    assert cheap.base_url is None
+    assert reliable.provider == "openai_compatible"
+    assert reliable.model == "openai/gpt-oss-20b"
+    assert reliable.timeout_ms == 10000
+
+
+def test_cloudru_policy_has_no_placeholders_or_keys() -> None:
+    policy_path = BASE_DIR / "llm_policy" / "llm-policy.cloudru.yaml"
+    raw = policy_path.read_text(encoding="utf-8")
+    payload = policy_loader._load_policy_payload(policy_path)
+
+    assert not _contains_placeholder(payload)
+    assert "LLM_API_KEY" not in raw
+    assert "API_KEY" not in raw
+    assert "sk-" not in raw
 
 
 def test_invalid_missing_profile(tmp_path: Path) -> None:

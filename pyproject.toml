@@ -10,6 +10,7 @@ dependencies = [
   "jsonschema",
   "openai",
   "pydantic",
+  "uvicorn",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,45 @@
+schema_version: 1
+compat:
+  adr: "ADR-003"
+  note: "internal-only"
+profiles:
+  cheap:
+    description: "Cloud.ru UAT cheap profile"
+  reliable:
+    description: "Cloud.ru UAT reliable profile"
+tasks:
+  shopping_extraction:
+    description: "Extract shopping items from user text"
+routing:
+  shopping_extraction:
+    cheap:
+      provider: "openai_compatible"
+      model: "openai/gpt-oss-20b"
+      temperature: 0.1
+      max_tokens: 512
+      timeout_ms: 8000
+    reliable:
+      provider: "openai_compatible"
+      model: "openai/gpt-oss-20b"
+      temperature: 0.1
+      max_tokens: 512
+      timeout_ms: 10000
+fallback_chain:
+  - event: "invalid_json"
+    action: "repair_retry"
+    max_retries: 1
+  - event: "schema_validation_failed"
+    action: "repair_retry"
+    max_retries: 1
+  - event: "invalid_json"
+    action: "escalate_to"
+    profile: "reliable"
+  - event: "schema_validation_failed"
+    action: "escalate_to"
+    profile: "reliable"
+  - event: "timeout"
+    action: "return_error"
+  - event: "llm_unavailable"
+    action: "return_error"
+  - event: "llm_error"
+    action: "return_error"
