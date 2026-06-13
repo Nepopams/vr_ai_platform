@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from typing import Mapping
 
@@ -18,7 +19,7 @@ SHOPPING_EXTRACTION_SCHEMA: Mapping[str, object] = {
                 "type": "object",
                 "properties": {
                     "name": {"type": "string", "minLength": 1},
-                    "quantity": {"type": ["string", "null"]},
+                    "quantity": {"type": ["string", "number", "null"]},
                     "unit": {"type": ["string", "null"]},
                 },
                 "required": ["name"],
@@ -78,7 +79,7 @@ def extract_shopping_item_name(
 
     if result.status == "ok" and result.data is not None:
         raw_items = result.data.get("items", [])
-        items = [item for item in raw_items if isinstance(item, dict) and item.get("name")]
+        items = _normalize_shopping_items(raw_items)
         return ExtractionResult(items=items, used_policy=True, error_type=None)
 
     return ExtractionResult(items=[], used_policy=True, error_type=result.error_type)
@@ -103,10 +104,72 @@ def _run_policy_extraction(
 
 
 def _build_shopping_prompt(text: str) -> str:
-    schema_text = json.dumps(SHOPPING_EXTRACTION_SCHEMA, ensure_ascii=False)
+    format_text = json.dumps(
+        {
+            "items": [
+                {
+                    "name": "string",
+                    "quantity": "string|null",
+                    "unit": "string|null",
+                }
+            ]
+        },
+        ensure_ascii=False,
+    )
     return (
-        "Извлеки все товары из текста пользователя. "
-        "Верни JSON со списком items по схеме.\n"
-        f"Схема: {schema_text}\n"
+        "Верни только JSON object без markdown, пояснений и code fences. "
+        f"Формат: {format_text}. "
+        "quantity только string или null; unit string или null. "
+        'Для "2 литра кефира": {"name":"кефир","quantity":"2","unit":"литра"}. '
+        "Если количества или единицы нет, верни null.\n"
         f"Текст: {text}"
     )
+
+
+def _normalize_shopping_items(raw_items: object) -> list[dict[str, str]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    normalized: list[dict[str, str]] = []
+    for raw_item in raw_items:
+        if not isinstance(raw_item, dict):
+            continue
+
+        name = _normalize_text_field(raw_item.get("name"))
+        if name is None:
+            continue
+
+        item: dict[str, str] = {"name": name}
+        quantity = _normalize_quantity(raw_item.get("quantity"))
+        if quantity is not None:
+            item["quantity"] = quantity
+
+        unit = _normalize_text_field(raw_item.get("unit"))
+        if unit is not None:
+            item["unit"] = unit
+
+        normalized.append(item)
+
+    return normalized
+
+
+def _normalize_text_field(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _normalize_quantity(value: object) -> str | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            return None
+        return str(int(value)) if value.is_integer() else str(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    return None

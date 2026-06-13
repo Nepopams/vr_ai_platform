@@ -11,7 +11,11 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from llm_policy.errors import LlmUnavailableError
-from llm_policy.http_caller import HttpLlmCaller, create_http_caller
+from llm_policy.http_caller import (
+    JSON_ONLY_SYSTEM_MESSAGE,
+    HttpLlmCaller,
+    create_http_caller,
+)
 from llm_policy.models import CallSpec
 
 # Reusable test fixtures
@@ -45,6 +49,13 @@ def _mock_success_response(content: str = "test response") -> MagicMock:
     return response
 
 
+def _assert_json_only_messages(body: dict, prompt: str) -> None:
+    assert body["messages"][0]["role"] == "system"
+    assert "JSON" in body["messages"][0]["content"]
+    assert body["messages"][0]["content"] == JSON_ONLY_SYSTEM_MESSAGE
+    assert body["messages"][1] == {"role": "user", "content": prompt}
+
+
 # Tests
 
 def test_sends_correct_request_yandex() -> None:
@@ -68,6 +79,7 @@ def test_sends_correct_request_yandex() -> None:
         assert headers["OpenAI-Project"] == "my-folder"
         body = call_args[1]["json"]
         assert body["model"] == "gpt-oss-20b"
+        _assert_json_only_messages(body, "test prompt")
         assert body["temperature"] == 0.2
         assert body["max_tokens"] == 256
 
@@ -87,6 +99,8 @@ def test_sends_correct_request_openai_compatible() -> None:
 
         headers = mock_client.post.call_args[1]["headers"]
         assert "OpenAI-Project" not in headers
+        body = mock_client.post.call_args[1]["json"]
+        _assert_json_only_messages(body, "test prompt")
 
 
 def test_sends_cloudru_request_to_chat_completions() -> None:
@@ -96,7 +110,7 @@ def test_sends_cloudru_request_to_chat_completions() -> None:
         model="openai/gpt-oss-20b",
         temperature=0.1,
         max_tokens=512,
-        timeout_ms=8000,
+        timeout_ms=30000,
         base_url="https://foundation-models.api.cloud.ru/v1",
         project=None,
     )
@@ -117,7 +131,7 @@ def test_sends_cloudru_request_to_chat_completions() -> None:
         )
         body = call_args[1]["json"]
         assert body["model"] == "openai/gpt-oss-20b"
-        assert body["messages"] == [{"role": "user", "content": "test prompt"}]
+        _assert_json_only_messages(body, "test prompt")
         assert body["temperature"] == 0.1
         assert body["max_tokens"] == 512
 

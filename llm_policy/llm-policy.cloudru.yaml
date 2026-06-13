@@ -17,13 +17,13 @@ routing:
       model: "openai/gpt-oss-20b"
       temperature: 0.1
       max_tokens: 512
-      timeout_ms: 8000
+      timeout_ms: 30000
     reliable:
       provider: "openai_compatible"
       model: "openai/gpt-oss-20b"
       temperature: 0.1
       max_tokens: 512
-      timeout_ms: 10000
+      timeout_ms: 45000
 fallback_chain:
   - event: "invalid_json"
     action: "repair_retry"

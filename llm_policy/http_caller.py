@@ -12,6 +12,10 @@ from llm_policy.errors import LlmUnavailableError
 from llm_policy.models import CallSpec
 
 _LOGGER = logging.getLogger("llm_policy.http_caller")
+JSON_ONLY_SYSTEM_MESSAGE = (
+    "Return only a valid JSON object. Do not use markdown, code fences, "
+    "explanations, or prose."
+)
 
 
 def create_http_caller(*, api_key: str | None = None) -> "HttpLlmCaller":
@@ -80,7 +84,10 @@ class HttpLlmCaller:
     def _build_body(self, spec: CallSpec, prompt: str) -> Dict[str, Any]:
         body: Dict[str, Any] = {
             "model": spec.model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content": JSON_ONLY_SYSTEM_MESSAGE},
+                {"role": "user", "content": prompt},
+            ],
         }
         if spec.temperature is not None:
             body["temperature"] = spec.temperature
