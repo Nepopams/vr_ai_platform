@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 name: contract-writer
 description: Authors and validates API contracts (OpenAPI, JSON Schema, AsyncAPI). Invoke before introducing new commands, intents, API endpoints, or data structures.

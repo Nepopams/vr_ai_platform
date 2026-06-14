@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 description: Generate Sprint doc + Gate B using templates and strict Sources-of-Truth links.
 argument-hint: "<sprint-XX> <ST-001> <ST-002> ..."

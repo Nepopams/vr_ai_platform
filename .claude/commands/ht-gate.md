@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 description: Generate Gate B or Exit Review artifact from templates.
 argument-hint: "gate-b <sprint-XX> | exit-review <sprint-XX>"

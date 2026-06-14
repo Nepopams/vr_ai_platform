@@ -31,11 +31,11 @@ A story/task is **Ready** when it meets ALL criteria below.
 
 ## Flags (Check if Applicable)
 
-- [ ] **contract_impact**: New endpoint, schema, or breaking change → requires contract-writer agent
-- [ ] **adr_needed**: Architectural decision → requires ADR (see adr-designer agent)
-- [ ] **diagrams_needed**: Structural or flow change → requires diagram update (see diagram-steward agent)
-- [ ] **security_sensitive**: Auth/authz change or cross-household data → requires security-reviewer agent
-- [ ] **traceability_critical**: Command pipeline change → requires observability-reviewer agent
+- [ ] **contract_impact**: New endpoint, schema, public contract, or breaking change → requires artifact gate and contract governance.
+- [ ] **adr_needed**: Architectural decision → requires artifact gate and ADR governance.
+- [ ] **diagrams_needed**: Structural or flow change → requires artifact gate and diagram governance.
+- [ ] **security_sensitive**: Auth/authz, privacy, secret handling, or sensitive data boundary change → requires read-only security review.
+- [ ] **traceability_critical**: Command pipeline, logging, metrics, or fallback behavior change → requires read-only observability review.
 
 ## Blocked States (Not Ready If...)
 

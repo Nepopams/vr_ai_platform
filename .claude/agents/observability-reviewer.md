@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 name: observability-reviewer
 description: Ensures command traceability, DecisionLog compliance, and event/outbox patterns. Invoke when implementing command processing, adding decision points, or publishing events.

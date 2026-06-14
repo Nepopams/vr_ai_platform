@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 name: test-writer
 description: Writes test specifications and drives verification loops. Invoke before marking any implementation task as done, when adding functionality, or when fixing bugs.

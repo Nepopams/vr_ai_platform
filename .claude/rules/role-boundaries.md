@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 # Role Boundaries: Claude vs Codex (STOP-THE-LINE)
 
 ## КРИТИЧЕСКИ ВАЖНО — Читать перед каждым действием
