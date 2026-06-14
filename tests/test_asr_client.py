@@ -62,6 +62,7 @@ def test_cloudru_asr_client_sends_openai_compatible_request() -> None:
     assert url == "https://foundation-models.api.cloud.ru/v1/audio/transcriptions"
     assert kwargs["headers"]["Authorization"] == "Bearer secret-key"
     assert kwargs["data"]["model"] == "openai/whisper-large-v3"
+    assert kwargs["data"]["language"] == "ru"
     assert kwargs["data"]["response_format"] == "json"
     assert kwargs["files"]["file"] == ("sample.wav", b"fake-audio", "audio/wav")
     assert result.transcript == "текст"

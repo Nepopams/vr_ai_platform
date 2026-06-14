@@ -52,6 +52,7 @@ ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1
 ASR_TRANSCRIBE_PATH=/audio/transcriptions
 ASR_API_KEY=<secret-from-secret-manager>
 ASR_MODEL=openai/whisper-large-v3
+ASR_LANGUAGE=ru
 ASR_TIMEOUT_MS=30000
 ASR_MAX_FILE_SIZE_MB=25
 ASR_LOG_ENABLED=true
@@ -101,6 +102,7 @@ export ASR_REAL_SMOKE_ENABLED=true
 export ASR_API_KEY=<secret-from-secret-manager>
 export ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1
 export ASR_TRANSCRIBE_PATH=/audio/transcriptions
+export ASR_LANGUAGE=ru
 export ASR_SMOKE_AUDIO_PATH=tests/fixtures/asr/uat-sample.wav
 export ASR_LOG_ENABLED=true
 export LOG_USER_TEXT=false
@@ -123,6 +125,7 @@ $env:ASR_REAL_SMOKE_ENABLED = "true"
 $env:ASR_API_KEY = "<secret-from-secret-manager>"
 $env:ASR_BASE_URL = "https://foundation-models.api.cloud.ru/v1"
 $env:ASR_TRANSCRIBE_PATH = "/audio/transcriptions"
+$env:ASR_LANGUAGE = "ru"
 $env:ASR_SMOKE_AUDIO_PATH = "C:\uat-samples\asr-sample.wav"
 $env:ASR_LOG_ENABLED = "true"
 $env:LOG_USER_TEXT = "false"
@@ -232,6 +235,7 @@ Stop UAT and do not enable ASR for production if any condition is true:
 | `504 timeout` | Upstream latency exceeds timeout | Increase `ASR_TIMEOUT_MS` for UAT and rerun smoke. |
 | `413 file_too_large` | Audio exceeds `ASR_MAX_FILE_SIZE_MB` | Use a smaller UAT sample or raise the limit intentionally. |
 | `415 unsupported_media` | Unsupported audio MIME type | Use wav/mp3/webm/ogg/flac or update allowlist through a governed change. |
+| Transcript is English for Russian audio | Language hint is missing or ignored | Set `ASR_LANGUAGE=ru`, restart the service, and rerun smoke. |
 
 ## Rollback
 

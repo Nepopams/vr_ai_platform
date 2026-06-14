@@ -63,6 +63,14 @@ specification does not currently publish an audio transcription method. The impl
 therefore keeps `ASR_TRANSCRIBE_PATH` configurable and requires manual UAT before
 production enablement.
 
+## UAT Finding: Language Hint
+
+Initial Cloud.ru smoke with Russian audio returned English text, which indicates that
+the upstream Whisper profile may translate when no language hint is provided. The ASR
+client now sends `ASR_LANGUAGE=ru` by default as the upstream `language` form field.
+Set `ASR_LANGUAGE=` only when provider-side auto language detection is intentionally
+required.
+
 ## Recommendation
 
 Approve the local MVP for Human Gate D with one explicit follow-up: run the real Cloud.ru

@@ -53,6 +53,8 @@ class CloudRuAsrClient:
             "model": self._config.model,
             "response_format": "json",
         }
+        if self._config.language:
+            data["language"] = self._config.language
         files = {
             "file": (audio.filename, audio.content, audio.content_type),
         }

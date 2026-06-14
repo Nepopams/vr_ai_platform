@@ -14,6 +14,7 @@ ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1
 ASR_TRANSCRIBE_PATH=/audio/transcriptions
 ASR_API_KEY=<secret>
 ASR_MODEL=openai/whisper-large-v3
+ASR_LANGUAGE=ru
 ASR_TIMEOUT_MS=30000
 ASR_MAX_FILE_SIZE_MB=25
 ASR_LOG_ENABLED=true
@@ -27,6 +28,10 @@ as ASR configuration errors.
 on 2026-06-14 confirm the Foundation Models base URL and the
 `openai/whisper-large-v3` Audio-to-Text model, but the downloadable public OpenAPI
 spec currently lists only models and chat completions.
+
+`ASR_LANGUAGE=ru` is sent to the upstream transcription call to keep Russian UAT
+audio as Russian text instead of an English translation. Set `ASR_LANGUAGE=` only
+if auto language detection is required.
 
 ## Local Tests
 
@@ -53,6 +58,7 @@ ASR_REAL_SMOKE_ENABLED=true \
 ASR_API_KEY=<secret> \
 ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1 \
 ASR_TRANSCRIBE_PATH=/audio/transcriptions \
+ASR_LANGUAGE=ru \
 ASR_SMOKE_AUDIO_PATH=/path/to/sample.wav \
 python3 -m pytest tests/test_asr_integration_smoke.py -v
 ```

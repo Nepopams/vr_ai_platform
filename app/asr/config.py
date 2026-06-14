@@ -11,6 +11,7 @@ from app.asr.errors import AsrConfigError
 DEFAULT_PROVIDER = "cloudru"
 DEFAULT_MODEL = "openai/whisper-large-v3"
 DEFAULT_TRANSCRIBE_PATH = "/audio/transcriptions"
+DEFAULT_LANGUAGE = "ru"
 DEFAULT_TIMEOUT_MS = 30000
 DEFAULT_MAX_FILE_SIZE_MB = 25
 PLACEHOLDER_API_KEYS = frozenset(
@@ -42,6 +43,7 @@ class AsrConfig:
     transcribe_path: str
     api_key: str
     model: str
+    language: str | None
     timeout_ms: int
     max_file_size_mb: int
     allowed_media_types: frozenset[str]
@@ -83,6 +85,15 @@ def _media_types(env: Mapping[str, str]) -> frozenset[str]:
     return values
 
 
+def _language(env: Mapping[str, str]) -> str | None:
+    raw = env.get("ASR_LANGUAGE", DEFAULT_LANGUAGE).strip().lower()
+    if not raw:
+        return None
+    if len(raw) != 2 or not raw.isalpha():
+        raise AsrConfigError("ASR_LANGUAGE must be an ISO-639-1 language code")
+    return raw
+
+
 def load_asr_config(
     env: Mapping[str, str] | None = None,
     *,
@@ -117,6 +128,7 @@ def load_asr_config(
         transcribe_path=transcribe_path,
         api_key=api_key,
         model=model,
+        language=_language(source),
         timeout_ms=timeout_ms,
         max_file_size_mb=max_file_size_mb,
         allowed_media_types=_media_types(source),

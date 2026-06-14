@@ -82,6 +82,7 @@ The ASR endpoint returns controlled JSON errors:
 | `ASR_TRANSCRIBE_PATH` | `/audio/transcriptions` | Configurable OpenAI-compatible transcription path. |
 | `ASR_API_KEY` | empty | Required Cloud.ru Foundation Models API key. |
 | `ASR_MODEL` | `openai/whisper-large-v3` | ASR model id. |
+| `ASR_LANGUAGE` | `ru` | ISO-639-1 language hint sent to upstream ASR; empty value enables provider auto-detection. |
 | `ASR_TIMEOUT_MS` | `30000` | Upstream timeout. |
 | `ASR_MAX_FILE_SIZE_MB` | `25` | Max accepted file size. |
 | `ASR_LOG_ENABLED` | `true` | Enable safe ASR metadata logs. |
