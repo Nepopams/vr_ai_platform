@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.routes.asr import router as asr_router
 from app.routes.decide import router as decide_router
 from app.routes.health import router as health_router
 from llm_policy.bootstrap import bootstrap_llm_caller
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
     bootstrap_llm_caller()
     app = FastAPI(title="HomeTask Decision API")
     app.add_middleware(APIVersionMiddleware)
+    app.include_router(asr_router, prefix="/v1")
     app.include_router(decide_router, prefix="/v1")
     app.include_router(decide_router)
     app.include_router(health_router)

@@ -5,8 +5,12 @@
 Cloud.ru Foundation Models can be used as an OpenAI-compatible LLM provider for
 AI Platform LLM policy tasks.
 
-ASR is not part of the AI Platform runtime in this setup. If ASR is required,
-run it as external preprocessing: audio -> ASR -> text -> `/v1/decide`.
+ASR is now a separate AI Platform runtime capability exposed through
+`POST /v1/asr/transcribe`. It remains separate from the decision pipeline:
+audio -> `/v1/asr/transcribe` -> transcript text, then the client may explicitly
+send that text to `/v1/decide`.
+
+For ASR setup, see `docs/guides/asr-cloudru-whisper.md`.
 
 ## Required env vars
 
@@ -71,4 +75,5 @@ curl http://127.0.0.1:8000/ready
 - Numeric `quantity`: internal LLM output may contain numbers such as
   `"quantity": 2`; AI Platform normalizes quantity to a string before the
   DecisionDTO pipeline.
-- ASR remains external preprocessing: audio -> ASR -> text -> `/v1/decide`.
+- ASR uses separate `ASR_*` env vars and safe metadata logging. It does not
+  log raw audio or transcript by default.

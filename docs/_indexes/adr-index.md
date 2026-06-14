@@ -31,6 +31,7 @@ This index tracks all ADRs in the project. Update this file when creating/supers
 | ADR-005-P | Internal Agent Contract v0 (ABI) | accepted | 2026-02-09 | [Link](../adr/ADR-005-internal-agent-contract-v0.md) |
 | ADR-006-P | Multi-item internal model & quantity type | accepted | 2026-02-08 | [Link](../adr/ADR-006-multi-item-internal-model.md) |
 | ADR-007-P | API Versioning Strategy | proposed | 2026-02-11 | [Link](../adr/ADR-007-api-versioning.md) |
+| ADR-008-P | ASR Cloud.ru Whisper Transcription MVP | accepted | 2026-06-14 | [Link](../adr/ADR-008-asr-cloudru-whisper-mvp.md) |
 
 ## Template
 
