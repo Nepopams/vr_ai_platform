@@ -26,6 +26,10 @@ ALLOWED_LOG_FIELDS = {
     "upstream_transcript_length",
     "upstream_data_keys",
     "upstream_result_keys",
+    "upstream_error_keys",
+    "upstream_error_code",
+    "upstream_error_type",
+    "upstream_error_status",
 }
 
 

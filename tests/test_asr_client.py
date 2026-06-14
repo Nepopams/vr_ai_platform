@@ -40,6 +40,7 @@ def _audio() -> AsrAudioFile:
 def _response(status_code: int = 200, payload: dict | None = None) -> MagicMock:
     response = MagicMock()
     response.status_code = status_code
+    response.headers = {"content-type": "application/json"}
     response.json.return_value = payload if payload is not None else {"text": "текст"}
     return response
 
@@ -144,3 +145,35 @@ def test_cloudru_asr_client_bad_response_logs_privacy_safe_shape() -> None:
 
     assert exc_info.value.log_details["upstream_response_keys"] == ["segments", "text"]
     assert exc_info.value.log_details["upstream_text_length"] == 0
+
+
+def test_cloudru_asr_client_maps_error_payload_to_upstream_unavailable() -> None:
+    caller = CloudRuAsrClient(_config())
+    with patch("app.asr.client.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.post.return_value = _response(
+            payload={"error": {"code": "model_unavailable", "type": "provider_error"}}
+        )
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        with pytest.raises(UpstreamUnavailableError) as exc_info:
+            caller.transcribe(_audio())
+
+    assert exc_info.value.log_details["upstream_response_keys"] == ["error"]
+    assert exc_info.value.log_details["upstream_error_code"] == "model_unavailable"
+    assert exc_info.value.log_details["upstream_error_type"] == "provider_error"
+
+
+def test_cloudru_asr_client_maps_error_payload_to_auth_error() -> None:
+    caller = CloudRuAsrClient(_config())
+    with patch("app.asr.client.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.post.return_value = _response(
+            payload={"error": {"code": "unauthorized", "type": "auth_error"}}
+        )
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        with pytest.raises(AsrAuthError):
+            caller.transcribe(_audio())
