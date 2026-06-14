@@ -4,8 +4,8 @@ A task is **Done** when it meets ALL criteria below.
 
 ## Code Quality
 
-- [ ] Code follows project conventions (Java 21, Spring Boot idioms)
-- [ ] Spotless formatting applied (`./gradlew spotlessApply`)
+- [ ] Code follows existing repository conventions and Python style
+- [ ] Relevant formatter/linter is run if already configured for the touched files
 - [ ] No compiler warnings introduced
 - [ ] No SonarLint critical issues (if applicable)
 - [ ] Code reviewed by at least one peer (PR review)
@@ -18,7 +18,7 @@ A task is **Done** when it meets ALL criteria below.
 - [ ] **Integration tests** written and passing
   - Coverage: New endpoints/flows must have integration tests
   - Testcontainers: PostgreSQL container used for DB-dependent tests
-- [ ] All tests pass locally: `./scripts/test.sh`
+- [ ] Relevant tests pass locally with `python3 -m pytest` or the documented Makefile target
 - [ ] Test data cleanup: No test pollution (each test isolated)
 
 ## Documentation Updates
@@ -26,8 +26,8 @@ A task is **Done** when it meets ALL criteria below.
 - [ ] **API Contract** updated if endpoint/schema changed (`docs/contracts/`)
 - [ ] **ADR** created/updated if architectural decision made (`docs/adr/`)
 - [ ] **Diagrams** updated if structure/flow changed (`docs/diagrams/`)
-- [ ] **Service Catalog** updated if service boundaries changed (`docs/architecture/service-catalog.md`)
-- [ ] **CLAUDE.md** updated if development rules changed
+- [ ] **ADR/Diagrams** updated if architecture boundaries or flows changed
+- [ ] **AGENTS.md** and `docs/CODEX-WORKFLOW.md` updated if workflow rules changed
 - [ ] **Indexes** updated:
   - `docs/_indexes/adr-index.md` if ADR added
   - `docs/_indexes/contracts-index.md` if contract added
@@ -42,7 +42,7 @@ A task is **Done** when it meets ALL criteria below.
 
 ## Security Basics
 
-- [ ] **No cross-household data leaks** (verified by security-reviewer agent)
+- [ ] **No sensitive data boundary leaks** (verified by read-only security review when relevant)
 - [ ] **No hardcoded secrets** (use environment variables or config)
 - [ ] **Input validation** present at API boundary
 - [ ] **Auth/authz** enforced if endpoint requires it (JWT validation)

@@ -2,7 +2,7 @@
 
 **Status:** Draft | Ready
 **Story:** `docs/planning/epics/EP-XXX/stories/ST-XXX-slug.md`
-**Owner:** Codex (implementation) / Claude (prompts + review)
+**Owner:** Codex PLAN / Codex APPLY / read-only review gate
 
 ---
 
@@ -85,3 +85,8 @@
 ### Forbidden
 
 - [paths]
+
+## Human Gates
+
+- Human Gate C: approve Codex PLAN before APPLY.
+- Human Gate D: decide merge, ship, rework, rollback, or defer after read-only review.

@@ -1,3 +1,5 @@
+> Legacy notice: active workflow now lives in AGENTS.md and docs/CODEX-WORKFLOW.md. This file or directory is historical reference only. Do not use it as active workflow authority.
+
 ---
 name: security-reviewer
 description: Reviews security boundaries, auth/authz patterns, and data access. Invoke before any auth changes, when handling user input, or when crossing household boundaries.

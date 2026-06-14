@@ -1,118 +1,117 @@
-# Environment
+# AGENTS.md
 
-- Python binary: **`python3`** (NOT `python`). The system does not have a `python` symlink.
-- Virtual environment: `.venv/` (use `.venv/bin/python3` or `source .venv/bin/activate`).
-- Test runner: `.venv/bin/pytest` or `python3 -m pytest`.
-- All verification commands must use `python3`, not `python`.
+## Base Rules
 
-# Base Rule
+- Всегда отвечай на русском. Код, имена API, схем и команд остаются на языке исходных файлов.
+- Работай только с файлами текущего репозитория, если пользователь явно не разрешил внешний источник.
+- Не выводи домен из названия репозитория. Назначение платформы бери из `docs/planning/strategy/product-goal.md`, ADR и контрактов.
+- Не меняй runtime-код, `contracts/**`, schemas, public API, тестовые фикстуры и существующие `.codex/skills/**` без утвержденного workpack и human gate.
+- Для Python используй `python3`, `.venv/bin/python3`, `.venv/bin/pytest` или `python3 -m pytest`. Команды с `python` запрещены.
 
-All explanations, summaries, reasoning, and descriptions of changes MUST be in Russian.
-Code itself stays in its original language.
+## Active Workflow Authority
 
-# Project Overview
+1. `AGENTS.md` - главный краткий instruction-файл для Codex.
+2. `CODEX.md` - короткий операционный вход в Codex-only workflow.
+3. `docs/CODEX-WORKFLOW.md` - подробная operating model.
+4. `.agents/skills/**/SKILL.md` - reusable workflow instructions.
+5. `.codex/agents/**` - read-only review agents.
+6. `.codex/skills/**` - project-specific deterministic / implementation-oriented skills, сохраняются как есть.
 
-HomeTask AI Platform routes user commands through a graph pipeline (`graphs/core_graph.py`)
-to produce structured decisions (DecisionDTO). LLM enhances but never replaces deterministic rules.
+`CLAUDE.md` и `.claude/**` являются legacy reference only и не являются active workflow authority.
 
-# Sources of Truth
+## Sources of Truth
 
 | Artifact | Canonical path |
-|----------|---------------|
+| --- | --- |
 | Product goal | `docs/planning/strategy/product-goal.md` |
 | Roadmap | `docs/planning/strategy/roadmap.md` |
 | MVP scope | `docs/planning/releases/MVP.md` |
-| Definition of Ready | `docs/_governance/dor.md` |
-| Definition of Done | `docs/_governance/dod.md` |
+| DoR | `docs/_governance/dor.md` |
+| DoD | `docs/_governance/dod.md` |
 | ADR archive | `docs/adr/` |
 | ADR index | `docs/_indexes/adr-index.md` |
-| Contract schemas | `contracts/schemas/` (JSON Schema) |
-| Contract version | `contracts/VERSION` (semver) |
+| Contract schemas | `contracts/schemas/` |
+| Contract version | `contracts/VERSION` |
+| Contract governance | `docs/contracts/CONTRACT-GOVERNANCE-RUNBOOK.md` |
 | Diagrams index | `docs/_indexes/diagrams-index.md` |
-| Epics & stories | `docs/planning/epics/<EPIC_ID>/` |
+| Planning templates | `docs/planning/_templates/` |
 | Workpacks | `docs/planning/workpacks/<STORY_ID>/` |
 
-# Development Rules
+## Architectural Invariants
 
-## Contract & ADR compliance (single source)
+- AI Platform is a stateless, contract-driven decision engine that returns `DecisionDTO`.
+- `graphs/core_graph.py` orchestrates the graph pipeline; deterministic behavior is the baseline.
+- LLM, assist, shadow, partial trust, and agent-hints may enhance decisions only within ADR-approved guardrails and feature flags.
+- All inputs and outputs must conform to `contracts/schemas/`.
+- Contract changes follow ADR-001 semver and require fixture/test updates.
+- New intents, actions, externally visible fields, model policy changes, runtime agent behavior, or public API changes require artifact gate before APPLY.
+- No raw user text or raw LLM output in logs, reports, review notes, or generated artifacts.
 
-- All inputs/outputs conform to `contracts/schemas/`.
-- Contract changes must follow semver (ADR-001). Never remove/rename fields without versioned migration.
-- New intents/agents/actions require ADR + semver bump.
-- If a change conflicts with an ADR, stop and create a new ADR (Draft) instead of pushing code.
-- Model policy / LLM selection must follow ADR-003.
-- Safe handling of unknown `action` values and payload fields is mandatory (ADR-001).
+## Codex-Only Delivery Pipeline
 
-Mandatory ADRs:
-- ADR-000: Contract-first Intent -> Decision Engine
-- ADR-001: Contract versioning & compatibility
-- ADR-002: Agent model & execution boundaries
-- ADR-003: LLM model policy registry & escalation
-- ADR-005: Internal Agent Contract v0
+Active delivery flow:
 
-## MVP compliance
+`intake -> planning -> artifact gate -> workpack -> Codex PLAN -> Human Gate C -> Codex APPLY -> read-only review gate -> Human Gate D`
 
-Changes to `contracts/`, `graphs/`, `agents/`, `skills/` must conform to MVP scope.
-New intents/actions/fields require: MVP scope update + ADR-001 semver + fixture/test updates.
+- Intake and planning collect goal, constraints, sources of truth, scope anchor, risks, and readiness.
+- Artifact gate decides whether contracts, ADR, diagrams, model policy, public API, or planning anchors must change before implementation.
+- Workpack is the implementation authority for APPLY: files, boundaries, acceptance criteria, commands, rollback.
+- Human Gate C is mandatory between PLAN and APPLY.
+- Human Gate D is mandatory after the read-only review gate before merge, ship, or rollback.
 
-## Privacy
+## PLAN / APPLY / REVIEW
 
-No raw user text or raw LLM output in logs or reports.
-Logging uses summaries/counters only. Sensitive fields: `text`, `question`, `item_name`,
-`ui_message`, `raw`, `output`, `prompt`, `normalized_text`.
+### Codex PLAN
 
-## Diagrams
+- Read-only only: inspect files, schemas, tests, logs, and git state.
+- No edits, no file writes, no package installs, no network, no commits, no migrations, no runtime mutation.
+- Output exact findings: affected files, risks, missing inputs, proposed implementation steps, validation commands.
+- If sources conflict or required inputs are missing, stop and report the blocked list.
 
-If you change `contracts/`, `graphs/`, `agents/`, or `api/`, check whether diagrams
-need updates (`docs/_indexes/diagrams-index.md`). Explain in commit if skipped.
+### Codex APPLY
 
-# Agent Platform v0
+- Allowed only after Human Gate C.
+- Follow the approved workpack and PLAN findings.
+- Touch only allowed paths. Do not broaden scope opportunistically.
+- Stop before changing contracts, schemas, public API, ADR-significant architecture, or diagrams unless artifact gate already approved it.
+- Preserve existing `.codex/skills/**` unless the workpack explicitly authorizes a skill change.
 
-## Architecture
+### Read-Only REVIEW
 
-- Agents are orchestrated by `graphs/core_graph.py`.
-- Each agent accepts a command payload, returns a structured contribution to the decision.
-- Agent Contract v0 (ADR-005): standardized inputs/outputs, no "snowflake" agents.
+- Review agents and review passes are read-only.
+- No production code writes, no document mutation, no parallel document mutation, no APPLY, no human gate bypass.
+- Output must be GO/NO-GO with Must-fix, Should-fix, Evidence, and Recommendation.
 
-## Components
+## Change Management
 
-| Component | Path |
-|-----------|------|
-| Registry v0 | `agent_registry/agent-registry-v0.yaml` |
-| Loader | `agent_registry/v0_loader.py` |
-| Runner | `agent_registry/v0_runner.py` (modes: `python_module`, `llm_policy_task`) |
-| Capabilities catalog | `agent_registry/capabilities-v0.yaml` |
-| Validation toolkit | `agent_registry/validation.py`, `agent_registry/v0_reason_codes.py` |
-| Baseline agents | `agents/baseline_shopping.py`, `agents/baseline_clarify.py` |
-| Run logs | `app/logging/agent_run_log.py` (opt-in) |
-| Manual runner | `scripts/run_agent_v0.py` |
-| Config | `AGENT_REGISTRY_ENABLED=true`, `AGENT_REGISTRY_PATH=<path>` |
+- Changes to `contracts/`, `graphs/`, `agents/`, `agent_registry/`, `agent_runner/`, `llm_policy/`, `routers/`, `app/`, or public API require explicit source-of-truth references and relevant checks.
+- Contract changes require ADR-001 classification, semver decision, fixtures, schema validation, graph sanity, and changelog entry.
+- ADR or diagram drift must be resolved before implementation if the work changes architecture, flow, boundaries, or external behavior.
+- If a requested change conflicts with an accepted ADR, stop and create or request a Draft ADR instead of pushing implementation.
 
-## Adding a new agent v0
-
-1. Add AgentSpec to registry, `enabled: false` by default.
-2. Define exactly 1 capability in the catalog (`payload_allowlist`, `contains_sensitive_text`).
-3. Set `runner.ref` (valid module/task), ensure `mode` is allowed for the capability.
-4. Output must pass validation toolkit. Logs: summaries/counters only, no raw data.
-5. Test via `scripts/run_agent_v0.py` before enabling.
-
-## Assist agent-hints
-
-- Enabled by feature flags only; do not change `action/job_type` selection.
-- Used as hints for missing entities; deterministic-first guardrails mandatory.
-
-# Offline-friendly checks
-
-- `make release-sanity` skips `api-sanity` if `fastapi` is unavailable.
-- Full API sanity: `RUN_API_SANITY=1 make release-sanity`.
-
-# Canonical Commands
+## Local Commands
 
 ```bash
-python3 -m pytest tests/ -v        # full test suite
-make validate_contracts             # contract validation
-make run_graph                      # single graph run
-make run_graph_suite                # full graph regression
-make audit_decisions                # decision log audit
-make release-sanity                 # release sanity check
+python3 -m pytest tests/ -v
+make validate_contracts
+make run_graph
+make run_graph_suite
+make audit_decisions
+make release-sanity
 ```
+
+`make release-sanity` is offline-friendly and may skip API sanity when optional API dependencies are unavailable. Full API sanity uses `RUN_API_SANITY=1 make release-sanity`.
+
+## Worktree Safety
+
+- Read current git status before broad edits.
+- Never revert or delete user changes unless the user explicitly asks.
+- Ignore unrelated dirty files. If they affect the task, work with them and explain the constraint.
+- Prefer `rg` / `rg --files` for discovery.
+- Use focused patches and avoid unrelated refactors.
+
+## Output Expectations
+
+- Explain decisions, summaries, validation, risks, and follow-up in Russian.
+- Reference local files with exact paths when useful.
+- For delivery work, final reports should include Summary, Files changed, Active workflow authority, Legacy status, Validation, Risks / Follow-up.

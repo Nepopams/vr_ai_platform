@@ -1,0 +1,18 @@
+name = "legacy-codex-review-gate"
+description = "Legacy reference stub retained during Codex-only workflow migration. Do not use as active workflow authority; use AGENTS.md, docs/CODEX-WORKFLOW.md, .agents/skills/**, and the active read-only review agents instead."
+developer_instructions = """
+Legacy reference only.
+
+Active workflow authority now lives in AGENTS.md and docs/CODEX-WORKFLOW.md.
+This legacy stub exists only to avoid silently preserving obsolete agent behavior during migration.
+
+Mandatory restrictions:
+- no production code writes;
+- no document mutation;
+- no parallel document mutation;
+- no APPLY;
+- no human gate bypass;
+- no runtime, contracts, schemas, public API, or fixture changes.
+
+If invoked, report that this agent is legacy reference only, point to the active workflow authority, and stop.
+"""
