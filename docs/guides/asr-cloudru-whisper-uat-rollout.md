@@ -35,6 +35,7 @@ Before deploying to UAT:
    `openai/whisper-large-v3`.
 3. A short test audio file is available on the UAT host, for example
    `/opt/vr-ai-platform/uat-samples/asr-sample.wav`.
+   If the repository sample is available, use `tests/fixtures/asr/uat-sample.wav`.
 4. The audio file contains non-sensitive test speech only.
 5. UAT ingress can reach `POST /v1/asr/transcribe`.
 6. UAT logs are accessible for privacy verification.
@@ -100,7 +101,7 @@ export ASR_REAL_SMOKE_ENABLED=true
 export ASR_API_KEY=<secret-from-secret-manager>
 export ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1
 export ASR_TRANSCRIBE_PATH=/audio/transcriptions
-export ASR_SMOKE_AUDIO_PATH=/opt/vr-ai-platform/uat-samples/asr-sample.wav
+export ASR_SMOKE_AUDIO_PATH=tests/fixtures/asr/uat-sample.wav
 export ASR_LOG_ENABLED=true
 export LOG_USER_TEXT=false
 
@@ -135,7 +136,7 @@ After the service is running, call the deployed endpoint:
 
 ```bash
 curl -fsS -X POST http://127.0.0.1:8000/v1/asr/transcribe \
-  -F "file=@/opt/vr-ai-platform/uat-samples/asr-sample.wav;type=audio/wav"
+  -F "file=@tests/fixtures/asr/uat-sample.wav;type=audio/wav"
 ```
 
 Expected response shape:
