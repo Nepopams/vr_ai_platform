@@ -18,6 +18,7 @@ This index tracks all architecture and flow diagrams in the project.
 | Component Diagram (Backend) | C4 Level 3 | Backend internal structure | [Link](../architecture/decisions/mvp/03-component-backend.md) |
 | Command Processing Flow | Sequence | NL command → task creation | [Link](../architecture/diagrams/command-processing-flow.md) |
 | Agent Registry Integration | Component / Flow | Registry integration points in V2 pipeline | [Link](../diagrams/agent-registry-integration.puml) |
+| ASR Cloud.ru Whisper MVP Flow | Sequence | Audio transcription flow and RouterV2 boundary | [Link](../diagrams/asr-cloudru-whisper-flow.puml) |
 
 ## Diagram Lifecycle
 

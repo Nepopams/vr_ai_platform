@@ -1,0 +1,25 @@
+@startuml
+title ASR Cloud.ru Whisper MVP Flow
+
+actor Client
+participant "AI Platform\n/v1/asr/transcribe" as API
+participant "ASR Service" as ASR
+participant "Cloud.ru Foundation Models\nWhisper" as Cloud
+database "Safe ASR JSONL log" as Log
+participant "RouterV2 / /v1/decide" as Router
+
+Client -> API: multipart/form-data\nfile=<audio>
+API -> API: validate one file,\nmedia type, max size
+API -> ASR: transcribe(audio bytes,\nmetadata only)
+ASR -> Cloud: POST configurable path\nBearer API key, model, file
+Cloud --> ASR: transcript response
+ASR --> API: typed transcript result
+API -> Log: safe metadata only\n(no audio, no transcript)
+API --> Client: transcript JSON
+
+note over API, Router
+ASR endpoint does not call RouterV2 or /v1/decide.
+Client may submit transcript to /v1/decide explicitly in a separate request.
+end note
+
+@enduml

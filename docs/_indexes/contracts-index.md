@@ -20,6 +20,7 @@ This index tracks all API contracts (OpenAPI, JSON Schema, AsyncAPI) in the proj
 | ASR Proxy API | Web/Bot | HomeTusk Backend | v1 | draft | [Link](../contracts/http/asr-proxy.openapi.yaml) |
 | Shopping Marketplaces API | Web Frontend | HomeTusk Backend | v1 | draft | [Link](../contracts/http/shopping-marketplaces.openapi.yaml) |
 | AI Platform Decision API | HomeTusk Backend | AI Platform (external) | v1 | stable | [Link](../contracts/external/ai-platform.decision.openapi.yaml) |
+| AI Platform ASR Transcription API | Client / ConsumerApp | AI Platform | v1 | draft | [Link](../contracts/asr-transcription-api.md) |
 | Task Schema | Commands API | Backend | v1 | stable | [Link](../contracts/schemas/task.schema.json) |
 | Command Schema | Commands API | Backend | v1 | stable | [Link](../contracts/schemas/command.schema.json) |
 
