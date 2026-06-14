@@ -1,6 +1,6 @@
 # Workpack: ST-047 — ASR Transcription Endpoint MVP
 
-**Status:** Done (manual Cloud.ru UAT pending)
+**Status:** Done (UAT passed 2026-06-14)
 **Story:** `docs/planning/epics/EP-015/stories/ST-047-asr-transcription-endpoint-mvp.md`
 **Owner:** Codex PLAN / Codex APPLY / read-only review gate
 

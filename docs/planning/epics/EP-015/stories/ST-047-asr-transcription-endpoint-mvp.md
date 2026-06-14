@@ -1,7 +1,7 @@
 # ST-047: ASR Transcription Endpoint MVP
 
 **Epic:** EP-015 (ASR Cloud.ru Whisper Transcription MVP)
-**Status:** Implemented (manual Cloud.ru UAT pending)
+**Status:** Done (UAT passed 2026-06-14)
 **Flags:** contract_impact=additive-public-api, adr_needed=yes, diagrams_needed=yes, security_sensitive=yes, traceability_critical=yes
 
 ---

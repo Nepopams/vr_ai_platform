@@ -1,6 +1,6 @@
 # EP-015: ASR Cloud.ru Whisper Transcription MVP
 
-**Status:** Implemented (manual Cloud.ru UAT pending)
+**Status:** Done (UAT passed 2026-06-14)
 **Initiative:** `docs/planning/initiatives/INIT-2026Q2-asr-cloudru-whisper.md`
 **Roadmap:** `docs/planning/strategy/roadmap.md`
 **Owner:** Codex

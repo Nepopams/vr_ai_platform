@@ -2,7 +2,7 @@
 
 **Приоритет:** Высокий
 **Период:** 2026Q2 (PI TBD)
-**Статус:** Implemented (manual Cloud.ru UAT pending)
+**Статус:** Done (UAT passed 2026-06-14)
 **Owner:** TBD
 
 ## Контекст

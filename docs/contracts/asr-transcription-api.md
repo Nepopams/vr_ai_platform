@@ -106,5 +106,16 @@ Public Cloud.ru docs checked on 2026-06-14 confirm:
 
 The downloadable public OpenAPI/Postman specs currently list only models and chat
 completion methods. Because the audio transcription method is not listed there, this
-MVP keeps `ASR_TRANSCRIBE_PATH` configurable and requires manual UAT smoke before
-production enablement.
+MVP keeps `ASR_TRANSCRIBE_PATH` configurable.
+
+## UAT Confirmation
+
+Manual Cloud.ru UAT smoke passed on 2026-06-14 with:
+
+- `ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1`
+- `ASR_TRANSCRIBE_PATH=/audio/transcriptions`
+- `ASR_MODEL=openai/whisper-large-v3`
+- `ASR_LANGUAGE=ru`
+
+The upstream response returned HTTP `200` with a top-level `text` field that mapped to
+the platform `transcript` response field.

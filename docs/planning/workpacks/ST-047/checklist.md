@@ -14,3 +14,4 @@
 - [x] Read-only review gate completed.
 - [x] Review and hardening summary recorded.
 - [x] UAT rollout guide added.
+- [x] Real Cloud.ru UAT smoke passed.

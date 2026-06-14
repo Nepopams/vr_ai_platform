@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-14
 **Scope:** `INIT-2026Q2-asr-cloudru-whisper`
-**Result:** GO for local ASR MVP; production enablement remains gated by manual Cloud.ru UAT.
+**Result:** GO. Local ASR MVP is implemented and Cloud.ru UAT smoke passed.
 
 ## Summary
 
@@ -26,7 +26,8 @@ returns transcript text to the client and does not automatically submit it to `/
 | Privacy-safe ASR logs implemented | `app/logging/asr_log.py`, `tests/test_asr_privacy.py` | Pass |
 | RouterV2/DecisionDTO unchanged | forbidden-path diff check and ASR boundary grep | Pass |
 | Local and UAT docs added | `docs/guides/asr-cloudru-whisper.md`, `docs/guides/asr-cloudru-whisper-uat-rollout.md` | Pass |
-| Manual Cloud.ru smoke ready | `tests/test_asr_integration_smoke.py` | Pass with external inputs pending |
+| Manual Cloud.ru smoke ready | `tests/test_asr_integration_smoke.py` | Pass |
+| Real Cloud.ru ASR smoke | VPS curl smoke, trace `trace-asr-d198bf85f3724b1ab9348d038de8829e` | Pass |
 
 ## Validation
 
@@ -48,20 +49,32 @@ Observed result:
 - Release sanity: passed.
 - Whitespace check: passed.
 
-## Open External Gate
+## UAT Evidence
 
-Manual Cloud.ru UAT is still pending because the current environment does not provide:
+Manual Cloud.ru UAT smoke passed on 2026-06-14 against the VPS deployment.
 
-- `ASR_REAL_SMOKE_ENABLED=true`
-- `ASR_API_KEY`
-- `ASR_BASE_URL`
-- `ASR_SMOKE_AUDIO_PATH`
+Observed response:
+
+- HTTP status: `200`
+- provider: `cloudru`
+- model: `openai/whisper-large-v3`
+- upstream_status: `200`
+- trace_id: `trace-asr-d198bf85f3724b1ab9348d038de8829e`
+- latency_ms: `1509`
+- transcript language: Russian after `ASR_LANGUAGE=ru`
+
+Confirmed endpoint/config:
+
+- `ASR_BASE_URL=https://foundation-models.api.cloud.ru/v1`
+- `ASR_TRANSCRIBE_PATH=/audio/transcriptions`
+- `ASR_MODEL=openai/whisper-large-v3`
+- `ASR_LANGUAGE=ru`
 
 Public Cloud.ru docs checked on 2026-06-14 confirm the Foundation Models base endpoint
-and the `openai/whisper-large-v3` Audio-to-Text model, but the downloadable public API
-specification does not currently publish an audio transcription method. The implementation
-therefore keeps `ASR_TRANSCRIBE_PATH` configurable and requires manual UAT before
-production enablement.
+and the `openai/whisper-large-v3` Audio-to-Text model. The downloadable public API
+specification does not currently publish an audio transcription method, but the UAT
+smoke confirms the OpenAI-compatible `/audio/transcriptions` path works for the current
+Cloud.ru deployment.
 
 ## UAT Finding: Language Hint
 
@@ -73,5 +86,4 @@ required.
 
 ## Recommendation
 
-Approve the local MVP for Human Gate D with one explicit follow-up: run the real Cloud.ru
-ASR smoke test before enabling this capability in production.
+Approve ST-047 for Human Gate D. The local MVP and real Cloud.ru UAT smoke are complete.
