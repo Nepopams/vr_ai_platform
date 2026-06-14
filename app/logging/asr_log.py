@@ -19,6 +19,13 @@ ALLOWED_LOG_FIELDS = {
     "file_size_bucket",
     "error_type",
     "upstream_status",
+    "upstream_content_type",
+    "upstream_response_keys",
+    "upstream_response_type",
+    "upstream_text_length",
+    "upstream_transcript_length",
+    "upstream_data_keys",
+    "upstream_result_keys",
 }
 
 

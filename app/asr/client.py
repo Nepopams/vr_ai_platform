@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import httpx
 
@@ -93,9 +94,57 @@ class CloudRuAsrClient:
         try:
             data = response.json()
         except ValueError as exc:
-            raise BadUpstreamResponseError("ASR upstream response is not JSON.") from exc
+            raise BadUpstreamResponseError(
+                "ASR upstream response is not JSON.",
+                log_details=self._response_shape(response, None),
+            ) from exc
 
-        transcript = data.get("text") if isinstance(data, dict) else None
+        transcript = self._first_non_blank_text(data)
         if not isinstance(transcript, str) or not transcript.strip():
-            raise BadUpstreamResponseError("ASR upstream response has no text field.")
+            raise BadUpstreamResponseError(
+                "ASR upstream response has no text or transcript field.",
+                log_details=self._response_shape(response, data),
+            )
         return transcript
+
+    def _first_non_blank_text(self, data: Any) -> str | None:
+        if not isinstance(data, dict):
+            return None
+
+        for key in ("text", "transcript"):
+            value = data.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+
+        for container_key in ("data", "result"):
+            nested = data.get(container_key)
+            if isinstance(nested, dict):
+                for key in ("text", "transcript"):
+                    value = nested.get(key)
+                    if isinstance(value, str) and value.strip():
+                        return value
+
+        return None
+
+    def _response_shape(self, response: httpx.Response, data: Any) -> dict[str, Any]:
+        details: dict[str, Any] = {
+            "upstream_status": response.status_code,
+            "upstream_content_type": response.headers.get("content-type"),
+        }
+        if isinstance(data, dict):
+            details["upstream_response_keys"] = sorted(str(key) for key in data.keys())
+            details["upstream_text_length"] = self._string_length(data.get("text"))
+            details["upstream_transcript_length"] = self._string_length(data.get("transcript"))
+            details["upstream_data_keys"] = self._nested_keys(data.get("data"))
+            details["upstream_result_keys"] = self._nested_keys(data.get("result"))
+        else:
+            details["upstream_response_type"] = type(data).__name__ if data is not None else "non_json"
+        return details
+
+    def _string_length(self, value: Any) -> int | None:
+        return len(value) if isinstance(value, str) else None
+
+    def _nested_keys(self, value: Any) -> list[str] | None:
+        if not isinstance(value, dict):
+            return None
+        return sorted(str(key) for key in value.keys())

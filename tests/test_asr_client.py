@@ -116,3 +116,31 @@ def test_cloudru_asr_client_rejects_bad_response_shape() -> None:
 
         with pytest.raises(BadUpstreamResponseError):
             caller.transcribe(_audio())
+
+
+def test_cloudru_asr_client_accepts_transcript_field() -> None:
+    caller = CloudRuAsrClient(_config())
+    with patch("app.asr.client.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.post.return_value = _response(payload={"transcript": "текст"})
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = caller.transcribe(_audio())
+
+    assert result.transcript == "текст"
+
+
+def test_cloudru_asr_client_bad_response_logs_privacy_safe_shape() -> None:
+    caller = CloudRuAsrClient(_config())
+    with patch("app.asr.client.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.post.return_value = _response(payload={"text": "", "segments": []})
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        with pytest.raises(BadUpstreamResponseError) as exc_info:
+            caller.transcribe(_audio())
+
+    assert exc_info.value.log_details["upstream_response_keys"] == ["segments", "text"]
+    assert exc_info.value.log_details["upstream_text_length"] == 0

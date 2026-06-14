@@ -38,20 +38,18 @@ async def transcribe_asr(request: Request):
         )
         result = CloudRuAsrClient(config).transcribe(audio)
     except AsrError as exc:
-        append_asr_log(
-            {
-                "request_id": trace_id,
-                "trace_id": trace_id,
-                "provider": config.provider if config else DEFAULT_PROVIDER,
-                "model": config.model if config else DEFAULT_MODEL,
-                "status": "error",
-                "latency_ms": int((time.monotonic() - started) * 1000),
-                "file_size_bucket": file_size_bucket(
-                    audio.size_bytes if audio else None
-                ),
-                "error_type": exc.error_type,
-            }
-        )
+        log_payload = {
+            "request_id": trace_id,
+            "trace_id": trace_id,
+            "provider": config.provider if config else DEFAULT_PROVIDER,
+            "model": config.model if config else DEFAULT_MODEL,
+            "status": "error",
+            "latency_ms": int((time.monotonic() - started) * 1000),
+            "file_size_bucket": file_size_bucket(audio.size_bytes if audio else None),
+            "error_type": exc.error_type,
+        }
+        log_payload.update(exc.log_details)
+        append_asr_log(log_payload)
         return JSONResponse(
             status_code=exc.status_code,
             content={

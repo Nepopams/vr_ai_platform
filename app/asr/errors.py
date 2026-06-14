@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 class AsrError(Exception):
     """Base class for controlled ASR platform errors."""
@@ -9,9 +11,10 @@ class AsrError(Exception):
     error_type = "asr_error"
     status_code = 500
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, log_details: dict[str, Any] | None = None) -> None:
         super().__init__(message)
         self.message = message
+        self.log_details = log_details or {}
 
 
 class AsrConfigError(AsrError):
