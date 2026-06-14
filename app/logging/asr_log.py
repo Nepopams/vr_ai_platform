@@ -53,13 +53,16 @@ def append_asr_log(payload: Dict[str, Any]) -> Path | None:
         return None
 
     path = resolve_asr_log_path()
-    _ensure_parent(path)
     record = {
         key: value
         for key, value in payload.items()
         if key in ALLOWED_LOG_FIELDS
     }
     record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(f"{json.dumps(record, ensure_ascii=False)}\n")
+    try:
+        _ensure_parent(path)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(f"{json.dumps(record, ensure_ascii=False)}\n")
+    except OSError:
+        return None
     return path

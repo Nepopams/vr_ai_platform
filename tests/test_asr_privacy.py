@@ -47,3 +47,18 @@ def test_asr_log_can_be_disabled(monkeypatch, tmp_path) -> None:
 
     assert result is None
     assert not log_path.exists()
+
+
+def test_asr_log_write_errors_do_not_raise(monkeypatch, tmp_path) -> None:
+    log_path = tmp_path / "asr.jsonl"
+    monkeypatch.setenv("ASR_LOG_PATH", str(log_path))
+    monkeypatch.setenv("ASR_LOG_ENABLED", "true")
+
+    def _raise_permission_error(*args, **kwargs):
+        raise PermissionError("log path is not writable")
+
+    monkeypatch.setattr(Path, "open", _raise_permission_error)
+
+    result = append_asr_log({"trace_id": "trace-asr-permission"})
+
+    assert result is None
