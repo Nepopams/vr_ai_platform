@@ -1,0 +1,18 @@
+{
+  "decision_id": "dec-202",
+  "command_id": "cmd-103",
+  "status": "error",
+  "action": "reject",
+  "decision_outcome": "reject",
+  "confidence": 0.91,
+  "payload": {
+    "code": "unsupported_action",
+    "reason": "Request is outside the supported household command corridor.",
+    "ui_message": "I cannot safely handle this request."
+  },
+  "explanation": "Unsupported command is rejected without proposed mutation.",
+  "trace_id": "trace-202",
+  "schema_version": "2.1.0",
+  "decision_version": "domain-planner-v1-contract-0.1",
+  "created_at": "2026-06-15T12:00:00Z"
+}

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -17,8 +19,8 @@ from jsonschema import ValidationError, validate
 
 try:
     import yaml
-except ImportError as exc:  # pragma: no cover - exercised only in missing dependency envs
-    raise SystemExit("PyYAML is required to read HomeTusk seed YAML fixtures.") from exc
+except ImportError:  # pragma: no cover - covered through environments without PyYAML
+    yaml = None
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -28,12 +30,21 @@ DEFAULT_SOURCE_DIR = Path(
 )
 COMMAND_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "command.schema.json"
 DECISION_SCHEMA_PATH = REPO_ROOT / "contracts" / "schemas" / "decision.schema.json"
+SCENARIO_FIXTURE_FILENAMES = (
+    "golden-scenarios-v1.yaml",
+    "golden-scenarios-v0.yaml",
+)
+CONTEXT_FIXTURE_FILENAMES = (
+    "context-fixtures-v1.yaml",
+    "context-fixtures-v0.yaml",
+)
 
 CURRENT_CAPABILITIES = [
     "start_job",
     "propose_create_task",
     "propose_add_shopping_item",
     "clarify",
+    "reject",
 ]
 
 FEATURE_FLAG_NAMES = [
@@ -72,23 +83,249 @@ DecisionFn = Callable[[Dict[str, Any]], Dict[str, Any]]
 def load_yaml(path: Path) -> Dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"Required fixture file not found: {path}")
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    data = yaml.safe_load(text) if yaml is not None else load_simple_yaml(text)
     if not isinstance(data, dict):
         raise ValueError(f"Fixture file must contain a YAML mapping: {path}")
     return data
+
+
+def load_simple_yaml(text: str) -> Any:
+    """Parse the basic YAML subset used by HomeTusk fixture files."""
+    lines = [strip_yaml_comment(line.rstrip()) for line in text.splitlines()]
+    value, index = parse_yaml_block(lines, 0, 0)
+    while index < len(lines) and not lines[index].strip():
+        index += 1
+    if index != len(lines):
+        raise ValueError("Unsupported YAML structure in fixture file.")
+    return value
+
+
+def strip_yaml_comment(line: str) -> str:
+    quote: Optional[str] = None
+    escaped = False
+    for index, char in enumerate(line):
+        if quote:
+            if char == "\\" and quote == '"' and not escaped:
+                escaped = True
+                continue
+            if char == quote and not escaped:
+                quote = None
+            escaped = False
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char == "#" and (index == 0 or line[index - 1].isspace()):
+            return line[:index].rstrip()
+    return line
+
+
+def yaml_indent(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def parse_yaml_block(lines: List[str], index: int, indent: int) -> tuple[Any, int]:
+    while index < len(lines) and not lines[index].strip():
+        index += 1
+    if index >= len(lines) or yaml_indent(lines[index]) < indent:
+        return None, index
+    stripped = lines[index].strip()
+    if stripped.startswith("-"):
+        return parse_yaml_sequence(lines, index, indent)
+    return parse_yaml_mapping(lines, index, indent)
+
+
+def parse_yaml_sequence(lines: List[str], index: int, indent: int) -> tuple[List[Any], int]:
+    items: List[Any] = []
+    while index < len(lines):
+        if not lines[index].strip():
+            index += 1
+            continue
+        current_indent = yaml_indent(lines[index])
+        stripped = lines[index].strip()
+        if current_indent < indent or current_indent != indent or not stripped.startswith("-"):
+            break
+        item_text = stripped[1:].strip()
+        index += 1
+        if not item_text:
+            item, index = parse_yaml_block(lines, index, indent + 2)
+            items.append(item)
+            continue
+        key_value = split_yaml_key_value(item_text)
+        if key_value:
+            key, raw_value = key_value
+            item: Dict[str, Any] = {}
+            if raw_value:
+                item[key] = parse_yaml_scalar(raw_value)
+            else:
+                item[key], index = parse_yaml_block(lines, index, indent + 2)
+            if index < len(lines) and yaml_indent(lines[index]) > indent:
+                extra, index = parse_yaml_block(lines, index, indent + 2)
+                if isinstance(extra, dict):
+                    item.update(extra)
+                elif extra is not None:
+                    raise ValueError("Unsupported nested YAML sequence item.")
+            items.append(item)
+        else:
+            items.append(parse_yaml_scalar(item_text))
+    return items, index
+
+
+def parse_yaml_mapping(lines: List[str], index: int, indent: int) -> tuple[Dict[str, Any], int]:
+    mapping: Dict[str, Any] = {}
+    while index < len(lines):
+        if not lines[index].strip():
+            index += 1
+            continue
+        current_indent = yaml_indent(lines[index])
+        stripped = lines[index].strip()
+        if current_indent < indent or current_indent != indent or stripped.startswith("-"):
+            break
+        key_value = split_yaml_key_value(stripped)
+        if not key_value:
+            raise ValueError(f"Unsupported YAML mapping line: {stripped}")
+        key, raw_value = key_value
+        index += 1
+        if raw_value:
+            mapping[key] = parse_yaml_scalar(raw_value)
+        else:
+            mapping[key], index = parse_yaml_block(lines, index, indent + 2)
+    return mapping, index
+
+
+def split_yaml_key_value(text: str) -> Optional[tuple[str, str]]:
+    if not re.match(r"^[A-Za-z0-9_\"'-]+\s*:", text):
+        return None
+    quote: Optional[str] = None
+    bracket_depth = 0
+    brace_depth = 0
+    escaped = False
+    for index, char in enumerate(text):
+        if quote:
+            if char == "\\" and quote == '"' and not escaped:
+                escaped = True
+                continue
+            if char == quote and not escaped:
+                quote = None
+            escaped = False
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        elif char == "[":
+            bracket_depth += 1
+        elif char == "]":
+            bracket_depth -= 1
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}":
+            brace_depth -= 1
+        elif char == ":" and bracket_depth == 0 and brace_depth == 0:
+            return parse_yaml_key(text[:index]), text[index + 1 :].strip()
+    return None
+
+
+def parse_yaml_key(raw_key: str) -> str:
+    key = raw_key.strip()
+    if (key.startswith('"') and key.endswith('"')) or (key.startswith("'") and key.endswith("'")):
+        return str(parse_yaml_scalar(key))
+    return key
+
+
+def parse_yaml_scalar(raw_value: str) -> Any:
+    value = raw_value.strip()
+    if value == "":
+        return None
+    if value.startswith("[") and value.endswith("]"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return []
+        return [parse_yaml_scalar(item) for item in split_top_level(inner)]
+    if value.startswith("{") and value.endswith("}"):
+        inner = value[1:-1].strip()
+        if not inner:
+            return {}
+        result: Dict[str, Any] = {}
+        for item in split_top_level(inner):
+            key_value = split_yaml_key_value(item)
+            if not key_value:
+                raise ValueError(f"Unsupported YAML flow mapping item: {item}")
+            key, nested_value = key_value
+            result[key] = parse_yaml_scalar(nested_value)
+        return result
+    if value.startswith('"') and value.endswith('"'):
+        return ast.literal_eval(value)
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1].replace("''", "'")
+    lowered = value.lower()
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    if lowered in {"null", "none", "~"}:
+        return None
+    if re.fullmatch(r"[-+]?\d+", value):
+        return int(value)
+    if re.fullmatch(r"[-+]?\d+\.\d+", value):
+        return float(value)
+    return value
+
+
+def split_top_level(text: str) -> List[str]:
+    items: List[str] = []
+    start = 0
+    quote: Optional[str] = None
+    bracket_depth = 0
+    brace_depth = 0
+    escaped = False
+    for index, char in enumerate(text):
+        if quote:
+            if char == "\\" and quote == '"' and not escaped:
+                escaped = True
+                continue
+            if char == quote and not escaped:
+                quote = None
+            escaped = False
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        elif char == "[":
+            bracket_depth += 1
+        elif char == "]":
+            bracket_depth -= 1
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}":
+            brace_depth -= 1
+        elif char == "," and bracket_depth == 0 and brace_depth == 0:
+            items.append(text[start:index].strip())
+            start = index + 1
+    items.append(text[start:].strip())
+    return [item for item in items if item]
 
 
 def load_json_schema(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def find_fixture_file(source_dir: Path, candidates: Iterable[str]) -> Path:
+    for filename in candidates:
+        candidate = source_dir / filename
+        if candidate.exists():
+            return candidate
+    expected = ", ".join(candidates)
+    raise FileNotFoundError(f"Required fixture file not found in {source_dir}: {expected}")
+
+
 def load_seed_source(source_dir: Path) -> Dict[str, Any]:
-    scenario_doc = load_yaml(source_dir / "golden-scenarios-v0.yaml")
-    context_doc = load_yaml(source_dir / "context-fixtures-v0.yaml")
+    scenario_path = find_fixture_file(source_dir, SCENARIO_FIXTURE_FILENAMES)
+    context_path = find_fixture_file(source_dir, CONTEXT_FIXTURE_FILENAMES)
+    scenario_doc = load_yaml(scenario_path)
+    context_doc = load_yaml(context_path)
     return {
         "scenarios_doc": scenario_doc,
         "contexts_doc": context_doc,
         "contexts": resolve_contexts(context_doc),
+        "scenario_file": scenario_path.name,
+        "context_file": context_path.name,
     }
 
 
@@ -241,12 +478,13 @@ def expected_outcomes(expected: str) -> Set[str]:
         "execute": {"execute"},
         "execute_or_clarify": {"execute", "clarify"},
         "clarify": {"clarify"},
-        "confirm": {"clarify"},
-        "confirm_or_clarify": {"clarify"},
-        "clarify_or_confirm": {"clarify"},
-        "clarify_then_confirm": {"clarify"},
+        "confirm": {"confirm", "clarify"},
+        "confirm_or_clarify": {"confirm", "clarify"},
+        "clarify_or_confirm": {"clarify", "confirm"},
+        "clarify_then_confirm": {"clarify", "confirm"},
         "answer_blocked_or_clarify": {"clarify", "blocked"},
-        "reject": {"reject_mapped_to_error"},
+        "reject": {"reject", "reject_mapped_to_error"},
+        "reject_or_clarify": {"reject", "reject_mapped_to_error", "clarify"},
     }
     return mapping.get(expected, {expected})
 
@@ -268,12 +506,19 @@ def expected_intents(expected: str) -> Set[str]:
 def provider_outcome(decision: Dict[str, Any]) -> str:
     action = decision.get("action")
     status = decision.get("status")
+    decision_outcome = decision.get("decision_outcome")
+    if decision_outcome in {"execute", "clarify", "reject", "confirm"}:
+        return str(decision_outcome)
     if status == "error":
         return "reject_mapped_to_error"
     if action == "clarify":
         return "clarify"
     if action in {"start_job", "propose_create_task", "propose_add_shopping_item"}:
         return "execute"
+    if action == "reject":
+        return "reject"
+    if action == "confirm":
+        return "confirm"
     return "unknown"
 
 
@@ -571,8 +816,13 @@ def build_report(
                 "scenarios": scenario_doc.get("schema_version"),
                 "contexts": context_doc.get("schema_version"),
             },
+            "fixture_files": {
+                "scenarios": seed["scenario_file"],
+                "contexts": seed["context_file"],
+            },
             "scenario_count": len(scenario_doc.get("scenarios", [])),
             "context_count": len(context_doc.get("contexts", [])),
+            "suite_policy": scenario_doc.get("suite_policy", {}),
             "minimum_before_domain_planner_acceptance": scenario_doc.get("suite_policy", {}).get(
                 "minimum_before_domain_planner_acceptance"
             ),
@@ -591,7 +841,19 @@ def build_report(
 
 
 def collect_sensitive_strings(*docs: Dict[str, Any]) -> Set[str]:
-    sensitive_keys = {"input_text", "name", "display_name", "aliases", "title", "ux_recommendation"}
+    sensitive_keys = {
+        "input_text",
+        "text",
+        "name",
+        "display_name",
+        "aliases",
+        "title",
+        "ux_recommendation",
+        "question",
+        "message",
+        "prompt",
+        "label",
+    }
     values: Set[str] = set()
 
     def visit(value: Any, key: Optional[str] = None) -> None:
@@ -627,13 +889,28 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def run_command_from_args(args: argparse.Namespace) -> str:
+    command = ["python3", "scripts/evaluate_domain_planner_seed.py"]
+    if args.source_dir != DEFAULT_SOURCE_DIR:
+        command.extend(["--source-dir", str(args.source_dir)])
+    if args.source_revision:
+        command.extend(["--source-revision", args.source_revision])
+    if args.planner_version != "current-provider-router":
+        command.extend(["--planner-version", args.planner_version])
+    if args.output:
+        command.extend(["--output", str(args.output)])
+    if args.check_no_raw_text:
+        command.append("--check-no-raw-text")
+    return " ".join(command)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     args = parse_args(argv)
     report = build_report(
         source_dir=args.source_dir,
         source_revision=args.source_revision,
         planner_version=args.planner_version,
-        run_command="python3 scripts/evaluate_domain_planner_seed.py",
+        run_command=run_command_from_args(args),
     )
     report_text = json.dumps(report, ensure_ascii=False, indent=2)
     if args.check_no_raw_text:

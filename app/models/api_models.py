@@ -73,6 +73,8 @@ CapabilityType = Literal[
     "propose_create_task",
     "propose_add_shopping_item",
     "clarify",
+    "reject",
+    "confirm",
 ]
 
 
@@ -97,7 +99,10 @@ ActionType = Literal[
     "propose_create_task",
     "propose_add_shopping_item",
     "clarify",
+    "reject",
+    "confirm",
 ]
+DecisionOutcomeType = Literal["execute", "clarify", "reject", "confirm"]
 
 
 class DecisionResponse(BaseModel):
@@ -114,6 +119,7 @@ class DecisionResponse(BaseModel):
     command_id: str
     status: StatusType
     action: ActionType
+    decision_outcome: Optional[DecisionOutcomeType] = None
     confidence: float = Field(ge=0, le=1)
     payload: Dict[str, Any]
     explanation: str

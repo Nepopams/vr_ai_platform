@@ -17,7 +17,9 @@
           "start_job",
           "propose_create_task",
           "propose_add_shopping_item",
-          "clarify"
+          "clarify",
+          "reject",
+          "confirm"
         ]
       },
       "minItems": 1

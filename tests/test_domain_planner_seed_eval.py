@@ -16,14 +16,20 @@ if str(SCRIPTS_DIR) not in sys.path:
 import evaluate_domain_planner_seed as eval_seed
 
 
-def _write_seed_files(source_dir: Path, *, expected_outcome: str = "execute") -> None:
+def _write_seed_files(
+    source_dir: Path,
+    *,
+    expected_outcome: str = "execute",
+    version: str = "v0",
+) -> None:
     source_dir.mkdir(parents=True, exist_ok=True)
-    (source_dir / "golden-scenarios-v0.yaml").write_text(
+    (source_dir / f"golden-scenarios-{version}.yaml").write_text(
         f"""
-schema_version: "golden-scenarios-v0"
+schema_version: "golden-scenarios-{version}"
 suite_policy:
-  seed_count: 1
+  scenario_count: 1
   minimum_before_domain_planner_acceptance: 50
+  blocker_failure_tolerance: 0
 scenarios:
   - id: "GS-T1"
     input_text: "SECRET RAW COMMAND"
@@ -40,9 +46,9 @@ scenarios:
 """.lstrip(),
         encoding="utf-8",
     )
-    (source_dir / "context-fixtures-v0.yaml").write_text(
-        """
-schema_version: "golden-context-v0"
+    (source_dir / f"context-fixtures-{version}.yaml").write_text(
+        f"""
+schema_version: "golden-context-{version}"
 timezone: "Europe/Moscow"
 reference_instant: "2026-06-15T12:00:00+03:00"
 contexts:
@@ -105,6 +111,45 @@ def _decision(command: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _clarify_decision(command: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "decision_id": "dec-clarify",
+        "command_id": command["command_id"],
+        "status": "clarify",
+        "action": "clarify",
+        "confidence": 0.7,
+        "payload": {
+            "question": "SECRET CLARIFY QUESTION",
+            "missing_fields": ["intent"],
+        },
+        "explanation": "test",
+        "trace_id": "trace-test",
+        "schema_version": "2.0.0",
+        "decision_version": "test-planner",
+        "created_at": "2026-06-15T12:00:00Z",
+    }
+
+
+def _reject_decision(command: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "decision_id": "dec-reject",
+        "command_id": command["command_id"],
+        "status": "error",
+        "action": "reject",
+        "decision_outcome": "reject",
+        "confidence": 0.8,
+        "payload": {
+            "code": "unsupported_action",
+            "reason": "SECRET REJECT REASON",
+        },
+        "explanation": "test",
+        "trace_id": "trace-test",
+        "schema_version": "2.1.0",
+        "decision_version": "test-planner",
+        "created_at": "2026-06-15T12:00:00Z",
+    }
+
+
 def test_report_uses_source_metadata_and_scenario_ids(tmp_path: Path) -> None:
     source_dir = tmp_path / "seed"
     _write_seed_files(source_dir)
@@ -119,8 +164,11 @@ def test_report_uses_source_metadata_and_scenario_ids(tmp_path: Path) -> None:
     assert report["source"]["revision"] == "rev-test"
     assert report["source"]["fixture_versions"]["scenarios"] == "golden-scenarios-v0"
     assert report["source"]["fixture_versions"]["contexts"] == "golden-context-v0"
+    assert report["source"]["fixture_files"]["scenarios"] == "golden-scenarios-v0.yaml"
+    assert report["source"]["fixture_files"]["contexts"] == "context-fixtures-v0.yaml"
     assert report["source"]["scenario_count"] == 1
     assert report["source"]["context_count"] == 1
+    assert report["source"]["suite_policy"]["scenario_count"] == 1
     assert report["run"]["planner_version"] == "planner-test"
     assert report["results"][0]["scenario_id"] == "GS-T1"
     assert "input_text" not in report["results"][0]
@@ -141,9 +189,56 @@ def test_report_does_not_emit_raw_fixture_text(tmp_path: Path) -> None:
         "SECRET ZONE",
         "SECRET LIST",
         "SECRET TASK TITLE",
+        "SECRET CLARIFY QUESTION",
     ):
         assert forbidden not in report_text
 
+    eval_seed.assert_no_sensitive_output(report_text, source_dir)
+
+
+def test_report_loads_v1_fixture_filenames_and_accepts_reject_or_clarify(tmp_path: Path) -> None:
+    source_dir = tmp_path / "expanded"
+    _write_seed_files(source_dir, expected_outcome="reject_or_clarify", version="v1")
+
+    report = eval_seed.build_report(
+        source_dir=source_dir,
+        source_revision="rev-v1",
+        planner_version="planner-test",
+        decide_fn=_clarify_decision,
+    )
+    result = report["results"][0]
+
+    assert report["source"]["fixture_versions"]["scenarios"] == "golden-scenarios-v1"
+    assert report["source"]["fixture_versions"]["contexts"] == "golden-context-v1"
+    assert report["source"]["fixture_files"]["scenarios"] == "golden-scenarios-v1.yaml"
+    assert report["source"]["fixture_files"]["contexts"] == "context-fixtures-v1.yaml"
+    assert report["source"]["suite_policy"]["blocker_failure_tolerance"] == 0
+    assert result["actual_outcome"] == "clarify"
+    assert result["outcome_match"] is True
+
+    report_text = json.dumps(report, ensure_ascii=False)
+    assert "SECRET CLARIFY QUESTION" not in report_text
+    eval_seed.assert_no_sensitive_output(report_text, source_dir)
+
+
+def test_report_accepts_first_class_reject_without_raw_reason(tmp_path: Path) -> None:
+    source_dir = tmp_path / "expanded"
+    _write_seed_files(source_dir, expected_outcome="reject", version="v1")
+
+    report = eval_seed.build_report(
+        source_dir=source_dir,
+        source_revision="rev-v1",
+        planner_version="planner-test",
+        decide_fn=_reject_decision,
+    )
+    result = report["results"][0]
+
+    assert result["actual_outcome"] == "reject"
+    assert result["outcome_match"] is True
+    assert report["metrics"]["blocker_failure_scenarios"] == 0
+
+    report_text = json.dumps(report, ensure_ascii=False)
+    assert "SECRET REJECT REASON" not in report_text
     eval_seed.assert_no_sensitive_output(report_text, source_dir)
 
 

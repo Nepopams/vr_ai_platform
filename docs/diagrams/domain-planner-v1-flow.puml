@@ -13,7 +13,7 @@ Decide -> CommandValidator: validate request schema
 CommandValidator --> Decide: valid / reject request
 
 Decide -> Planner: plan within narrow corridor
-Planner -> Planner: create_task / add_shopping_items / clarify / safe reject mapping
+Planner -> Planner: create_task / add_shopping_items / clarify / first-class safe reject
 Planner --> Decide: provider DecisionDTO candidate
 
 Decide -> DecisionValidator: validate response schema
