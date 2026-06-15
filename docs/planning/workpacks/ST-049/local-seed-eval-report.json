@@ -1,0 +1,317 @@
+{
+  "source": {
+    "repo": "hometusk",
+    "path": "C:\\Users\\user\\Documents\\projects\\hometusk\\hometusk\\docs\\research\\ai-command-capabilities\\domain-planner-v1-gate\\golden-scenarios-fixtures-v0",
+    "revision": "d924c631c80895995c65f22bec6f77dc0a0347b7",
+    "fixture_versions": {
+      "scenarios": "golden-scenarios-v0",
+      "contexts": "golden-context-v0"
+    },
+    "scenario_count": 10,
+    "context_count": 3,
+    "minimum_before_domain_planner_acceptance": 50
+  },
+  "run": {
+    "command": "python3 scripts/evaluate_domain_planner_seed.py",
+    "planner_version": "current-provider-router",
+    "schema_versions": [
+      "2.0.0"
+    ],
+    "decision_versions": [
+      "mvp1-graph-0.1"
+    ],
+    "feature_flags": {
+      "DECISION_ROUTER_STRATEGY": null,
+      "LOG_USER_TEXT": null,
+      "PIPELINE_LATENCY_LOG_ENABLED": null,
+      "FALLBACK_METRICS_LOG_ENABLED": null,
+      "SHADOW_ROUTER_ENABLED": null,
+      "ASSIST_MODE_ENABLED": null,
+      "PARTIAL_TRUST_ENABLED": null,
+      "LLM_POLICY_ENABLED": null
+    },
+    "eval_env_overrides": {
+      "LOG_USER_TEXT": "false",
+      "PIPELINE_LATENCY_LOG_ENABLED": "false",
+      "FALLBACK_METRICS_LOG_ENABLED": "false",
+      "SHADOW_ROUTER_ENABLED": "false",
+      "ASSIST_MODE_ENABLED": "false",
+      "PARTIAL_TRUST_ENABLED": "false"
+    }
+  },
+  "results": [
+    {
+      "scenario_id": "GS-001",
+      "schema_valid": true,
+      "expected_outcome": "execute_or_clarify",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "create_task",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 1,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-002",
+      "schema_valid": true,
+      "expected_outcome": "execute",
+      "actual_outcome": "execute",
+      "outcome_match": true,
+      "expected_intent": "add_shopping_items",
+      "actual_intent": "add_shopping_items",
+      "intent_match": true,
+      "actual_action_types": [
+        "propose_add_shopping_item",
+        "propose_add_shopping_item"
+      ],
+      "expected_action_count": 1,
+      "expected_item_count": 2,
+      "actual_action_count": 2,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-003",
+      "schema_valid": true,
+      "expected_outcome": "execute_or_clarify",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "add_shopping_items",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 1,
+      "expected_item_count": 2,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent",
+        "item_boundary_loss"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-004",
+      "schema_valid": true,
+      "expected_outcome": "confirm_or_clarify",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "task_shopping_linkage_or_shopping_context",
+      "actual_intent": "add_shopping_items",
+      "intent_match": true,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 2,
+      "expected_item_count": 2,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "item_boundary_loss"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-005",
+      "schema_valid": true,
+      "expected_outcome": "confirm",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "create_task",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 1,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-006",
+      "schema_valid": true,
+      "expected_outcome": "clarify_or_confirm",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "reschedule_task",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 1,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-007",
+      "schema_valid": true,
+      "expected_outcome": "clarify_then_confirm",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "batch_planning",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 0,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-008",
+      "schema_valid": true,
+      "expected_outcome": "clarify",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "ambiguous_household_prep",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 0,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-009",
+      "schema_valid": true,
+      "expected_outcome": "reject",
+      "actual_outcome": "reject_mapped_to_error",
+      "outcome_match": true,
+      "expected_intent": "unsafe_batch_assignment",
+      "actual_intent": "clarify_needed",
+      "intent_match": false,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 0,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [
+        "wrong_intent"
+      ],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    },
+    {
+      "scenario_id": "GS-010",
+      "schema_valid": true,
+      "expected_outcome": "answer_blocked_or_clarify",
+      "actual_outcome": "clarify",
+      "outcome_match": true,
+      "expected_intent": "answer_household_status",
+      "actual_intent": "clarify_needed",
+      "intent_match": true,
+      "actual_action_types": [
+        "clarify"
+      ],
+      "expected_action_count": 0,
+      "expected_item_count": 0,
+      "actual_action_count": 1,
+      "unsupported_auto_execute": false,
+      "cross_household_reference": false,
+      "trace_complete": true,
+      "skipped": false,
+      "skip_reason": null,
+      "failure_buckets": [],
+      "decision_schema_version": "2.0.0",
+      "decision_version": "mvp1-graph-0.1"
+    }
+  ],
+  "metrics": {
+    "total_scenarios": 10,
+    "evaluated_scenarios": 10,
+    "skipped_scenarios": 0,
+    "schema_valid_count": 10,
+    "outcome_match_count": 10,
+    "intent_match_count": 3,
+    "unsupported_auto_execute_count": 0,
+    "cross_household_reference_count": 0,
+    "blocker_failure_scenarios": 0,
+    "failure_bucket_counts": {
+      "item_boundary_loss": 2,
+      "wrong_intent": 7
+    }
+  }
+}

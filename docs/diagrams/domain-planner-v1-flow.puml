@@ -1,0 +1,35 @@
+@startuml
+title Domain Planner v1 Provider Flow
+
+actor "HomeTusk Backend" as HomeTusk
+participant "AI Platform /v1/decide" as Decide
+participant "CommandDTO Validator" as CommandValidator
+participant "Domain Planner v1\n(narrow corridor)" as Planner
+participant "DecisionDTO Validator" as DecisionValidator
+participant "Provider Eval\n(seed scenarios)" as Eval
+
+HomeTusk -> Decide: CommandDTO\nreviewed text + minimal context
+Decide -> CommandValidator: validate request schema
+CommandValidator --> Decide: valid / reject request
+
+Decide -> Planner: plan within narrow corridor
+Planner -> Planner: create_task / add_shopping_items / clarify / safe reject mapping
+Planner --> Decide: provider DecisionDTO candidate
+
+Decide -> DecisionValidator: validate response schema
+DecisionValidator --> Decide: schema-valid DecisionDTO
+Decide --> HomeTusk: provider decision + trace/version metadata
+
+HomeTusk -> HomeTusk: map to accepted taxonomy
+HomeTusk -> HomeTusk: schema validation, guardrails,\nexecution authority, DecisionLog
+
+Eval ..> Decide: offline seed scenario run
+Eval ..> Eval: scenario IDs, metrics,\nfailure buckets, no raw text reports
+
+note over Planner
+AI Platform does not mutate HomeTusk state.
+No direct mobile/web calls to AI Platform.
+ASR remains transcription-only and does not auto-call /v1/decide.
+end note
+
+@enduml
