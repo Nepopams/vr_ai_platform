@@ -2,8 +2,10 @@
 
 **Priority:** High
 **Period:** 2026Q3 (PI TBD)
-**Status:** Draft (to be approved at Gate A)
+**Status:** Done (Gate A GO; Gate B GO; ST-052 Done; ST-053 Done; ST-054 Done; ST-055 Done; ST-056 Done; provider-side Gate D GO)
 **Owner:** AI Platform engineering team
+**Execution artifact:** `docs/planning/initiatives/INIT-2026Q3-domain-planner-v1-contract-and-50-scenario-eval.execution.md`
+**Provider epic:** `docs/planning/epics/EP-017/epic.md`
 
 ## Context
 
@@ -318,6 +320,23 @@ Approve only if:
 - Unsafe, unsupported, cross-household, answer-style, and confirm-required scenarios do not execute.
 - Contract decisions for `reject` and `confirm` are no longer ambiguous.
 - HomeTusk can make the next decision from evidence rather than seed-demo confidence.
+
+## Closure Summary
+
+Closed on 2026-06-15 with provider-side Gate D GO.
+
+Final provider evidence:
+
+- 50 scenarios evaluated;
+- 50 schema-valid decisions;
+- 50 outcome matches;
+- 0 blocker failure scenarios;
+- 0 unsupported auto-execute;
+- 0 cross-household references;
+- first-class `reject` supported in schema and runtime;
+- non-executing `confirm` supported in schema, with runtime UX deferred to a future HomeTusk integration initiative;
+- `answer` remains blocked;
+- HomeTusk handoff produced at `docs/planning/workpacks/ST-056/hometusk-handoff.md`.
 
 ## Non-Goals Reminder
 

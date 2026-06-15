@@ -37,7 +37,7 @@ def _valid_decision_dict() -> dict:
         },
         "explanation": "Тестовое решение.",
         "trace_id": "trace-001",
-        "schema_version": "2.0.0",
+        "schema_version": "2.1.0",
         "decision_version": "mvp1-graph-0.1",
         "created_at": "2026-01-01T12:00:00+00:00",
     }
@@ -63,6 +63,13 @@ def test_command_request_invalid_capability() -> None:
         CommandRequest.model_validate(data)
 
 
+def test_command_request_accepts_reject_and_confirm_capabilities() -> None:
+    data = _valid_command_dict()
+    data["capabilities"] = ["start_job", "clarify", "reject", "confirm"]
+    cmd = CommandRequest.model_validate(data)
+    assert cmd.capabilities[-2:] == ["reject", "confirm"]
+
+
 def test_command_request_extra_field_rejected() -> None:
     data = _valid_command_dict()
     data["extra_field"] = "should fail"
@@ -74,6 +81,44 @@ def test_decision_response_valid() -> None:
     dec = DecisionResponse.model_validate(_valid_decision_dict())
     assert dec.decision_id == "dec-001"
     assert dec.action == "start_job"
+
+
+def test_decision_response_accepts_reject_action() -> None:
+    data = _valid_decision_dict()
+    data.update(
+        {
+            "status": "error",
+            "action": "reject",
+            "decision_outcome": "reject",
+            "payload": {
+                "code": "unsupported_action",
+                "reason": "Request is outside the supported corridor.",
+            },
+        }
+    )
+    dec = DecisionResponse.model_validate(data)
+    assert dec.action == "reject"
+    assert dec.decision_outcome == "reject"
+
+
+def test_decision_response_accepts_confirm_action() -> None:
+    data = _valid_decision_dict()
+    data.update(
+        {
+            "status": "clarify",
+            "action": "confirm",
+            "decision_outcome": "confirm",
+            "payload": {
+                "confirmation_id": "confirm-001",
+                "summary": "Confirm before assignment.",
+                "proposed_actions": [],
+                "expires_at": "2026-01-01T12:10:00+00:00",
+            },
+        }
+    )
+    dec = DecisionResponse.model_validate(data)
+    assert dec.action == "confirm"
+    assert dec.decision_outcome == "confirm"
 
 
 def test_decision_response_confidence_bounds() -> None:

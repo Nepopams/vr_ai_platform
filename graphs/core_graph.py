@@ -49,8 +49,27 @@ def sample_command() -> Dict[str, Any]:
     }
 
 
-SHOPPING_KEYWORDS = ("куп", "shopping", "grocery", "buy", "add")
-TASK_KEYWORDS = ("task", "todo", "сделай", "сделать", "нужно", "починить", "убраться")
+SHOPPING_KEYWORDS = (
+    "куп",
+    "shopping",
+    "grocery",
+    "buy",
+    "add",
+    "добав",
+    "закин",
+    "покупк",
+)
+TASK_KEYWORDS = (
+    "task",
+    "todo",
+    "сделай",
+    "сделать",
+    "нужно",
+    "надо",
+    "починить",
+    "убраться",
+    "вынести",
+)
 DOMAIN_TASK_KEYWORDS = TASK_KEYWORDS + (
     "задач",
     "дело",
@@ -62,10 +81,12 @@ CONFIRM_OR_CLARIFY_KEYWORDS = (
     "confirm",
     "подтверд",
     "перенеси",
+    "сдвин",
     "reschedule",
     "заверш",
     "complete",
     "done",
+    "завтра",
     "план",
     "plan",
     "redistribute",
@@ -87,7 +108,66 @@ SAFE_REJECT_KEYWORDS = (
     "impossible",
     "unsafe",
 )
+UNSUPPORTED_POLICY_KEYWORDS = (
+    "always",
+    "policy",
+    "rule",
+    "всегда",
+    "правил",
+)
+FOREIGN_HOUSEHOLD_KEYWORDS = (
+    "other household",
+    "another household",
+    "foreign household",
+    "другого дома",
+    "другой дом",
+    "чужого дома",
+    "чужой дом",
+    "чужой список",
+    "чужого списка",
+)
+DEVICE_CONTROL_VERBS = (
+    "turn on",
+    "turn off",
+    "включ",
+    "выключ",
+    "запусти",
+)
+UNSUPPORTED_DEVICE_KEYWORDS = (
+    "device",
+    "robot vacuum",
+    "робот-пылесос",
+    "пылесос",
+    "умную ламп",
+)
+UNSUPPORTED_PAYMENT_KEYWORDS = (
+    "pay",
+    "payment",
+    "transfer money",
+    "переведи деньг",
+    "деньг",
+    "оплат",
+)
 SHOPPING_CONTEXT_MARKER_WORDS = ("к", "для", "на")
+DEICTIC_SHOPPING_REFERENCES = ("это", "этот", "эту", "this", "that")
+TASK_COMMAND_LEADS = (
+    "task",
+    "todo",
+    "сделай",
+    "сделать",
+    "нужно",
+    "надо",
+    "почини",
+    "убер",
+    "вынеси",
+)
+TASK_SCHEDULE_MARKERS = (
+    "завтра",
+    "сегодня",
+    "послезавтра",
+    "tomorrow",
+    "today",
+)
 
 
 def detect_intent(text: str) -> str:
@@ -103,9 +183,36 @@ def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
     return any(keyword in text for keyword in keywords)
 
 
+def has_unresolved_task_modifier(text: str, intent: str) -> bool:
+    if intent != "create_task":
+        return False
+    lowered = text.lower()
+    if _contains_any(lowered, TASK_SCHEDULE_MARKERS):
+        return True
+    match = _re.match(r"^\s*(\w+)", text, flags=_re.UNICODE)
+    if not match:
+        return False
+    first_word = match.group(1)
+    first_lowered = first_word.lower()
+    if any(first_lowered.startswith(lead) for lead in TASK_COMMAND_LEADS):
+        return False
+    return first_word[:1].isupper()
+
+
 def should_safe_reject(text: str) -> bool:
     lowered = text.lower()
-    return _contains_any(lowered, SAFE_REJECT_KEYWORDS)
+    if _contains_any(lowered, SAFE_REJECT_KEYWORDS):
+        return True
+    if _contains_any(lowered, UNSUPPORTED_POLICY_KEYWORDS):
+        return True
+    if _contains_any(lowered, FOREIGN_HOUSEHOLD_KEYWORDS):
+        return True
+    if _contains_any(lowered, UNSUPPORTED_PAYMENT_KEYWORDS):
+        return True
+    return _contains_any(lowered, DEVICE_CONTROL_VERBS) and _contains_any(
+        lowered,
+        UNSUPPORTED_DEVICE_KEYWORDS,
+    )
 
 
 def should_clarify_outside_narrow_corridor(text: str, intent: str) -> bool:
@@ -115,9 +222,13 @@ def should_clarify_outside_narrow_corridor(text: str, intent: str) -> bool:
     if has_shopping and has_task:
         return True
     if intent == "add_shopping_item":
+        if _contains_any(lowered, DEICTIC_SHOPPING_REFERENCES):
+            return True
         words = set(_re.findall(r"\w+", lowered, flags=_re.UNICODE))
         if words & set(SHOPPING_CONTEXT_MARKER_WORDS):
             return True
+    if has_unresolved_task_modifier(text, intent):
+        return True
     if intent not in {"add_shopping_item", "create_task"}:
         return _contains_any(lowered, CONFIRM_OR_CLARIFY_KEYWORDS)
     return _contains_any(lowered, CONFIRM_OR_CLARIFY_KEYWORDS) and not (
@@ -127,7 +238,7 @@ def should_clarify_outside_narrow_corridor(text: str, intent: str) -> bool:
 
 def extract_item_name(text: str) -> Optional[str]:
     lowered = text.lower()
-    patterns = ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить ")
+    patterns = ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить ", "закинь ")
     for pattern in patterns:
         if pattern in lowered:
             start = lowered.find(pattern) + len(pattern)
@@ -144,7 +255,7 @@ def extract_items(text: str) -> List[Dict[str, Any]]:
     """
     lowered = text.lower()
     raw = None
-    for pattern in ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить "):
+    for pattern in ("купить ", "купи ", "buy ", "add ", "добавь ", "добавить ", "закинь "):
         if pattern in lowered:
             start = lowered.find(pattern) + len(pattern)
             raw = text[start:].strip()
@@ -153,7 +264,7 @@ def extract_items(text: str) -> List[Dict[str, Any]]:
         return []
 
     # Remove trailing context phrases
-    for stop in (" в список", " в корзину", " in the list", " to the list"):
+    for stop in (" в список", " в корзину", " в покупки", " in the list", " to the list"):
         idx = raw.lower().find(stop)
         if idx > 0:
             raw = raw[:idx].strip()
@@ -220,21 +331,54 @@ def build_clarify_decision(
     }
 
 
+def build_reject_decision(
+    command: Dict[str, Any],
+    *,
+    code: str = "unsupported_action",
+    reason: str = "Request is outside the supported household command corridor.",
+    ui_message: str = "I cannot safely handle this request.",
+    details: Optional[Dict[str, Any]] = None,
+    explanation: str = "Unsupported command is rejected without proposed mutation.",
+) -> Dict[str, Any]:
+    schema_version = CONTRACTS_VERSION_PATH.read_text(encoding="utf-8").strip()
+    payload: Dict[str, Any] = {
+        "code": code,
+        "reason": reason,
+        "ui_message": ui_message,
+    }
+    if details:
+        payload["details"] = details
+    return {
+        "decision_id": f"dec-{uuid4().hex}",
+        "command_id": command["command_id"],
+        "status": "error",
+        "action": "reject",
+        "decision_outcome": "reject",
+        "confidence": 0.2,
+        "payload": payload,
+        "explanation": explanation,
+        "trace_id": f"trace-{uuid4().hex}",
+        "schema_version": schema_version,
+        "decision_version": "mvp1-graph-0.1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def build_safe_reject_decision(
     command: Dict[str, Any],
     question: str = "Запрос не может быть выполнен в текущем безопасном коридоре.",
     missing_fields: Optional[List[str]] = None,
     explanation: str = "Запрос отклонен безопасным current-schema mapping.",
 ) -> Dict[str, Any]:
-    decision = build_clarify_decision(
+    details = {"missing_fields": missing_fields} if missing_fields else None
+    return build_reject_decision(
         command,
-        question=question,
-        missing_fields=missing_fields,
+        code="unsupported_or_unsafe_command",
+        reason=question,
+        ui_message=question,
+        details=details,
         explanation=explanation,
     )
-    decision["status"] = "error"
-    decision["confidence"] = 0.2
-    return decision
 
 
 def build_start_job_decision(

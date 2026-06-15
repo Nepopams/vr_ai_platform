@@ -83,13 +83,79 @@ def test_default_graph_clarifies_without_grounded_list() -> None:
     assert "item.list_id" in decision["payload"]["missing_fields"]
 
 
-def test_safe_reject_uses_current_schema_error_clarify() -> None:
+def test_safe_reject_uses_first_class_reject() -> None:
     decision = process_command(_command("Assign all tasks to everyone"))
 
     validate(instance=decision, schema=_decision_schema())
     assert decision["status"] == "error"
-    assert decision["action"] == "clarify"
-    assert "intent.safe_corridor" in decision["payload"]["missing_fields"]
+    assert decision["action"] == "reject"
+    assert decision["decision_outcome"] == "reject"
+    assert decision["payload"]["code"] == "unsupported_or_unsafe_command"
+
+
+def test_simple_russian_task_command_executes() -> None:
+    decision = process_command(_command("надо полить цветы"))
+
+    validate(instance=decision, schema=_decision_schema())
+    assert decision["status"] == "ok"
+    assert decision["action"] == "start_job"
+    assert decision["payload"]["job_type"] == "create_task"
+    assert decision["payload"]["proposed_actions"][0]["action"] == "propose_create_task"
+
+
+def test_russian_shopping_add_preserves_quantity_item_boundaries() -> None:
+    decision = process_command(_command("добавь 2 литра сока и 3 груши"))
+
+    validate(instance=decision, schema=_decision_schema())
+    assert decision["status"] == "ok"
+    assert decision["action"] == "start_job"
+    actions = decision["payload"]["proposed_actions"]
+    assert [action["payload"]["item"]["name"] for action in actions] == ["сока", "груши"]
+    assert actions[0]["payload"]["item"]["quantity"] == "2"
+    assert actions[0]["payload"]["item"]["unit"] == "литра"
+    assert actions[1]["payload"]["item"]["quantity"] == "3"
+
+
+def test_russian_shopping_drop_in_list_phrase_preserves_boundaries() -> None:
+    decision = process_command(_command("закинь чай и сахар в покупки"))
+
+    validate(instance=decision, schema=_decision_schema())
+    assert decision["status"] == "ok"
+    assert decision["action"] == "start_job"
+    actions = decision["payload"]["proposed_actions"]
+    assert [action["payload"]["item"]["name"] for action in actions] == ["чай", "сахар"]
+
+
+def test_unsupported_policy_device_payment_and_foreign_reference_reject() -> None:
+    commands = [
+        "сделай так чтобы уборка всегда назначалась автоматически",
+        "закрой задачу из чужого дома",
+        "включи умную лампу",
+        "оплати продукты",
+    ]
+
+    for text in commands:
+        decision = process_command(_command(text))
+
+        validate(instance=decision, schema=_decision_schema())
+        assert decision["status"] == "error"
+        assert decision["action"] == "reject"
+        assert decision["decision_outcome"] == "reject"
+
+
+def test_assignment_due_and_deictic_references_do_not_execute() -> None:
+    commands = [
+        "Саше вынести коробки",
+        "надо завтра полить цветы",
+        "добавь это в список",
+    ]
+
+    for text in commands:
+        decision = process_command(_command(text))
+
+        validate(instance=decision, schema=_decision_schema())
+        assert decision["status"] == "clarify"
+        assert decision["action"] == "clarify"
 
 
 def test_router_v2_mixed_task_shopping_does_not_execute() -> None:

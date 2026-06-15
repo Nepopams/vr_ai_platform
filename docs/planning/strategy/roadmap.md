@@ -15,22 +15,32 @@
 | 2026Q4 | S06-S08 | 3 | 11/11 | 228→270 | production-hardening |
 | 2026Q2 | ST-047 | 1 | 1/1 | 270→325 | asr-cloudru-whisper (local MVP; manual Cloud.ru UAT pending) |
 | 2026Q3 | ST-048-ST-051 | 1 | 4/4 | 325→340 | domain-planner-v1-narrow-household-command-corridor (provider closure; HomeTusk acceptance separate) |
-| **Total** | | **10** | **35/35** | **340** | **11 done** |
+| 2026Q3 | ST-052-ST-056 | 1 | 5/5 | 340→346 (+4 skipped) | domain-planner-v1-contract-and-50-scenario-eval (provider Gate D GO; HomeTusk runtime integration separate) |
+| **Total** | | **11** | **40/40** | **346 (+4 skipped)** | **12 done** |
 
 Детали закрытых инициатив: `docs/planning/initiatives/INIT-*.md`.
 Ретроспективы: `docs/planning/sprints/S01..S08/retro.md`.
 
 ---
 
-## CURRENT — No Active Initiative Selected
+## CURRENT — Awaiting PO / HomeTusk Decision
 
-Текущая high-priority provider-side инициатива закрыта. Следующая active initiative не выбрана; кандидаты остаются в `NEXT`.
+| Field | Value |
+|-------|-------|
+| Active initiative | None selected after current Gate D |
+| Latest completed initiative | `docs/planning/initiatives/INIT-2026Q3-domain-planner-v1-contract-and-50-scenario-eval.md` |
+| Execution notes | `docs/planning/initiatives/INIT-2026Q3-domain-planner-v1-contract-and-50-scenario-eval.execution.md` |
+| Epic | `docs/planning/epics/EP-017/epic.md` |
+| Handoff | `docs/planning/workpacks/ST-056/hometusk-handoff.md` |
+| Status | Provider-side Gate D GO; 50 scenarios evaluated; 0 blocker failures; HomeTusk runtime/mobile/backend/API remains separate |
+
+`INIT-2026Q3-domain-planner-v1-narrow-household-command-corridor` remains Completed as provider-side closure evidence. `INIT-2026Q3-domain-planner-v1-contract-and-50-scenario-eval` is now also Completed as provider evidence and handoff.
 
 ---
 
-## NEXT — TBD
+## NEXT — TBD after HomeTusk Review
 
-Кандидаты определяются PO.
+Кандидаты определяются PO. Recommended next candidate: a separate HomeTusk-owned runtime integration initiative if HomeTusk accepts the provider handoff.
 
 ---
 

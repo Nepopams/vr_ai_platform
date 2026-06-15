@@ -16,7 +16,7 @@ from app.services.decision_service import (
 router = APIRouter()
 
 
-@router.post("/decide")
+@router.post("/decide", response_model=DecisionResponse, response_model_exclude_none=True)
 async def decide_route(command: CommandRequest) -> DecisionResponse:
     try:
         decision = decide(command.model_dump(exclude_none=True))
