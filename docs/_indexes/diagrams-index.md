@@ -19,6 +19,7 @@ This index tracks all architecture and flow diagrams in the project.
 | Command Processing Flow | Sequence | NL command → task creation | [Link](../architecture/diagrams/command-processing-flow.md) |
 | Agent Registry Integration | Component / Flow | Registry integration points in V2 pipeline | [Link](../diagrams/agent-registry-integration.puml) |
 | ASR Cloud.ru Whisper MVP Flow | Sequence | Audio transcription flow and RouterV2 boundary | [Link](../diagrams/asr-cloudru-whisper-flow.puml) |
+| Domain Planner v1 Provider Flow | Sequence | Narrow provider decision flow and HomeTusk execution boundary | [Link](../diagrams/domain-planner-v1-flow.puml) |
 
 ## Diagram Lifecycle
 

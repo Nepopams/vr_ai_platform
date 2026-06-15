@@ -2,8 +2,11 @@
 
 **Priority:** High
 **Period:** 2026Q3 (PI TBD)
-**Status:** Draft (to be approved at Gate A)
+**Status:** Done (provider-side closure complete; HomeTusk acceptance separate)
 **Owner:** AI Platform engineering team
+
+**Execution artifact:** `docs/planning/initiatives/INIT-2026Q3-domain-planner-v1-narrow-household-command-corridor.execution.md`
+**Provider epic:** `docs/planning/epics/EP-016/epic.md`
 
 ## Context
 

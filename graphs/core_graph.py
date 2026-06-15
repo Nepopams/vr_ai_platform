@@ -51,6 +51,43 @@ def sample_command() -> Dict[str, Any]:
 
 SHOPPING_KEYWORDS = ("куп", "shopping", "grocery", "buy", "add")
 TASK_KEYWORDS = ("task", "todo", "сделай", "сделать", "нужно", "починить", "убраться")
+DOMAIN_TASK_KEYWORDS = TASK_KEYWORDS + (
+    "задач",
+    "дело",
+    "напомни",
+    "remind",
+    "assign",
+)
+CONFIRM_OR_CLARIFY_KEYWORDS = (
+    "confirm",
+    "подтверд",
+    "перенеси",
+    "reschedule",
+    "заверш",
+    "complete",
+    "done",
+    "план",
+    "plan",
+    "redistribute",
+    "перераспредел",
+    "workload",
+    "status",
+    "статус",
+)
+SAFE_REJECT_KEYWORDS = (
+    "everyone",
+    "everybody",
+    "all members",
+    "all tasks",
+    "всем",
+    "всех",
+    "все задачи",
+    "всю работу",
+    "невозможно",
+    "impossible",
+    "unsafe",
+)
+SHOPPING_CONTEXT_MARKER_WORDS = ("к", "для", "на")
 
 
 def detect_intent(text: str) -> str:
@@ -60,6 +97,32 @@ def detect_intent(text: str) -> str:
     if any(keyword in lowered for keyword in TASK_KEYWORDS):
         return "create_task"
     return "clarify_needed"
+
+
+def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
+    return any(keyword in text for keyword in keywords)
+
+
+def should_safe_reject(text: str) -> bool:
+    lowered = text.lower()
+    return _contains_any(lowered, SAFE_REJECT_KEYWORDS)
+
+
+def should_clarify_outside_narrow_corridor(text: str, intent: str) -> bool:
+    lowered = text.lower()
+    has_shopping = _contains_any(lowered, SHOPPING_KEYWORDS)
+    has_task = _contains_any(lowered, DOMAIN_TASK_KEYWORDS)
+    if has_shopping and has_task:
+        return True
+    if intent == "add_shopping_item":
+        words = set(_re.findall(r"\w+", lowered, flags=_re.UNICODE))
+        if words & set(SHOPPING_CONTEXT_MARKER_WORDS):
+            return True
+    if intent not in {"add_shopping_item", "create_task"}:
+        return _contains_any(lowered, CONFIRM_OR_CLARIFY_KEYWORDS)
+    return _contains_any(lowered, CONFIRM_OR_CLARIFY_KEYWORDS) and not (
+        intent == "create_task" and ("task" in lowered or "задач" in lowered)
+    )
 
 
 def extract_item_name(text: str) -> Optional[str]:
@@ -155,6 +218,23 @@ def build_clarify_decision(
         "decision_version": "mvp1-graph-0.1",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def build_safe_reject_decision(
+    command: Dict[str, Any],
+    question: str = "Запрос не может быть выполнен в текущем безопасном коридоре.",
+    missing_fields: Optional[List[str]] = None,
+    explanation: str = "Запрос отклонен безопасным current-schema mapping.",
+) -> Dict[str, Any]:
+    decision = build_clarify_decision(
+        command,
+        question=question,
+        missing_fields=missing_fields,
+        explanation=explanation,
+    )
+    decision["status"] = "error"
+    decision["confidence"] = 0.2
+    return decision
 
 
 def build_start_job_decision(
@@ -274,22 +354,55 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
             missing_fields=["text"],
             explanation="Текст команды пустой.",
         )
+    elif should_safe_reject(text):
+        decision = build_safe_reject_decision(
+            command,
+            missing_fields=["intent.safe_corridor"],
+            explanation="Запрос небезопасен или невозможен для узкого коридора.",
+        )
+    elif should_clarify_outside_narrow_corridor(text, intent):
+        decision = build_clarify_decision(
+            command,
+            question="Уточните один безопасный сценарий: задача или покупка?",
+            missing_fields=["intent"],
+            explanation="Запрос требует подтверждения или выходит за узкий коридор.",
+        )
     elif intent == "add_shopping_item":
+        items = extract_items(text)
         item_name = extract_item_name(text)
-        if not item_name:
+        if not items and item_name:
+            items = [{"name": item_name}]
+        if not items:
             decision = build_clarify_decision(
                 command,
                 question="Какой товар добавить в список покупок?",
                 missing_fields=["item.name"],
                 explanation="Не удалось извлечь название товара.",
             )
+        elif "propose_add_shopping_item" not in capabilities:
+            decision = build_clarify_decision(
+                command,
+                question="Какие действия разрешены для добавления покупки?",
+                missing_fields=["capability.propose_add_shopping_item"],
+                explanation="Отсутствует capability propose_add_shopping_item.",
+            )
+        elif not _default_list_id(command):
+            decision = build_clarify_decision(
+                command,
+                question="В какой список покупок добавить товары?",
+                missing_fields=["item.list_id"],
+                explanation="Список покупок не может быть однозначно определен.",
+            )
         else:
             proposed_actions: List[Dict[str, Any]] = []
-            if "propose_add_shopping_item" in capabilities:
-                list_id = _default_list_id(command)
-                item_payload = {"name": item_name}
-                if list_id:
-                    item_payload["list_id"] = list_id
+            list_id = _default_list_id(command)
+            for item in items:
+                item_payload: Dict[str, Any] = {"name": item["name"]}
+                if item.get("quantity"):
+                    item_payload["quantity"] = item["quantity"]
+                if item.get("unit"):
+                    item_payload["unit"] = item["unit"]
+                item_payload["list_id"] = list_id
                 proposed_actions.append(
                     build_proposed_action(
                         "propose_add_shopping_item",
@@ -313,20 +426,25 @@ def process_command(command: Dict[str, Any]) -> Dict[str, Any]:
                 missing_fields=["task.title"],
                 explanation="Не удалось получить описание задачи.",
             )
+        elif "propose_create_task" not in capabilities:
+            decision = build_clarify_decision(
+                command,
+                question="Какие действия разрешены для создания задачи?",
+                missing_fields=["capability.propose_create_task"],
+                explanation="Отсутствует capability propose_create_task.",
+            )
         else:
-            proposed_actions = []
-            if "propose_create_task" in capabilities:
-                proposed_actions.append(
-                    build_proposed_action(
-                        "propose_create_task",
-                        {
-                            "task": {
-                                "title": title,
-                                "assignee_id": _default_assignee_id(command),
-                            }
-                        },
-                    )
+            proposed_actions = [
+                build_proposed_action(
+                    "propose_create_task",
+                    {
+                        "task": {
+                            "title": title,
+                            "assignee_id": _default_assignee_id(command),
+                        }
+                    },
                 )
+            ]
             decision = build_start_job_decision(
                 command,
                 job_type="create_task",

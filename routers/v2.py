@@ -7,9 +7,12 @@ from typing import Any, Dict, List, Optional, Set
 from graphs.core_graph import (
     build_clarify_decision,
     build_proposed_action,
+    build_safe_reject_decision,
     build_start_job_decision,
     detect_intent,
     extract_items,
+    should_clarify_outside_narrow_corridor,
+    should_safe_reject,
     _default_assignee_id,
     _default_list_id,
 )
@@ -167,6 +170,25 @@ class RouterV2Pipeline(RouterStrategy):
                 explanation="Текст команды пустой.",
             )
 
+        if should_safe_reject(text):
+            return build_safe_reject_decision(
+                command,
+                missing_fields=["intent.safe_corridor"],
+                explanation="Запрос небезопасен или невозможен для узкого коридора.",
+            )
+
+        if should_clarify_outside_narrow_corridor(text, intent):
+            return build_clarify_decision(
+                command,
+                question=self._clarify_question(
+                    "Уточните один безопасный сценарий: задача или покупка?",
+                    assist,
+                    missing_fields=["intent"],
+                ),
+                missing_fields=["intent"],
+                explanation="Запрос требует подтверждения или выходит за узкий коридор.",
+            )
+
         if intent == "add_shopping_item":
             if not normalized.get("items") and not normalized.get("item_name"):
                 return build_clarify_decision(
@@ -178,6 +200,28 @@ class RouterV2Pipeline(RouterStrategy):
                     ),
                     missing_fields=["item.name"],
                     explanation="Не удалось извлечь название товара.",
+                )
+            if "propose_add_shopping_item" not in capabilities:
+                return build_clarify_decision(
+                    command,
+                    question=self._clarify_question(
+                        "Какие действия разрешены для добавления покупки?",
+                        assist,
+                        missing_fields=["capability.propose_add_shopping_item"],
+                    ),
+                    missing_fields=["capability.propose_add_shopping_item"],
+                    explanation="Отсутствует capability propose_add_shopping_item.",
+                )
+            if not _default_list_id(command):
+                return build_clarify_decision(
+                    command,
+                    question=self._clarify_question(
+                        "В какой список покупок добавить товары?",
+                        assist,
+                        missing_fields=["item.list_id"],
+                    ),
+                    missing_fields=["item.list_id"],
+                    explanation="Список покупок не может быть однозначно определен.",
                 )
             return build_start_job_decision(
                 command,
@@ -197,6 +241,17 @@ class RouterV2Pipeline(RouterStrategy):
                     ),
                     missing_fields=["task.title"],
                     explanation="Не удалось получить описание задачи.",
+                )
+            if "propose_create_task" not in capabilities:
+                return build_clarify_decision(
+                    command,
+                    question=self._clarify_question(
+                        "Какие действия разрешены для создания задачи?",
+                        assist,
+                        missing_fields=["capability.propose_create_task"],
+                    ),
+                    missing_fields=["capability.propose_create_task"],
+                    explanation="Отсутствует capability propose_create_task.",
                 )
             return build_start_job_decision(
                 command,
@@ -241,6 +296,23 @@ class RouterV2Pipeline(RouterStrategy):
         trace_id = baseline.get("trace_id")
         baseline_summary = self._summarize_baseline(baseline, normalized.get("intent"))
         try:
+            if baseline.get("status") != "ok" or baseline.get("action") != "start_job":
+                self._log_partial_trust(
+                    status="skipped",
+                    reason_code="baseline_non_execute",
+                    command_id=command_id,
+                    trace_id=trace_id,
+                    corridor_intent=corridor_intent or "",
+                    sample_rate=sample_rate,
+                    sampled=False,
+                    latency_ms=None,
+                    model_meta=None,
+                    baseline_summary=baseline_summary,
+                    llm_summary=None,
+                    diff_summary=None,
+                )
+                return None
+
             if corridor_intent is None or normalized.get("intent") != corridor_intent:
                 self._log_partial_trust(
                     status="skipped",
